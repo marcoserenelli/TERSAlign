@@ -1,9 +1,16 @@
 import org.biojava.nbio.structure.*;
 
+import java.util.Arrays;
+
 public class DistanceMatrixGenerator {
 
+    /**
+     * Create distance matrix based on a structure, for nucleotides takes distance between P as comparison method,
+     * for amino acid takes distance between CA as comparison method
+     * @param struc structure
+     * @return distance matrix
+     */
     public static Double[][] calcuateDistanceMatrix(Structure struc){
-
         Double[][] distanceMatrix = generateMatrix(struc);
         int moleculeCount = 0;
         for(Chain currentChain: struc.getChains()) {
@@ -34,17 +41,28 @@ public class DistanceMatrixGenerator {
         return distanceMatrix;
     }
 
+    /**
+     * Create an empty matrix with the right size, ignoring everything other than
+     * nucleotides or amino acid
+     * @param struc structure
+     * @return empty matrix with right size
+     */
     private static Double[][] generateMatrix(Structure struc) {
         int totalSequenceLength = 0;
         for(Chain currentChain : struc.getChains()) {
             for(Group currentGroup : currentChain.getAtomGroups()){
-                if(!(currentGroup.getType() == GroupType.HETATM))
+                if(currentGroup.getType() == GroupType.NUCLEOTIDE || currentGroup.getType() == GroupType.AMINOACID){
                     totalSequenceLength++;
+                }
             }
         }
         return new Double[totalSequenceLength][totalSequenceLength];
     }
 
+    /**
+     * Print the matrix
+     * @param distanceMatrix matrix to print
+     */
     public static void printAmminoacidDistanceMatrix(Double[][] distanceMatrix){
         for (int i=0; i<distanceMatrix.length; i++) {
             for (int j=0; j<distanceMatrix.length; j++) {
