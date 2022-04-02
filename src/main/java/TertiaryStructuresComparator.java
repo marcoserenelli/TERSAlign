@@ -9,7 +9,7 @@ public class TertiaryStructuresComparator {
         String filename = "4gxy";
         try{
             Structure struc = pdbreader.getStructureById(filename);
-            DistanceMatrixGenerator.printAmminoacidDistanceMatrix(DistanceMatrixGenerator.calcuateDistanceMatrix(struc));
+            RepAtmsDistanceMatrixGenerator.printAmminoacidDistanceMatrix(RepAtmsDistanceMatrixGenerator.calcuateDistanceMatrix(struc));
         } catch (Exception e){
             e.printStackTrace();
         }

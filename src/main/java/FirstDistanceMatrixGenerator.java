@@ -1,8 +1,6 @@
 import org.biojava.nbio.structure.*;
 
-import java.util.Arrays;
-
-public class DistanceMatrixGenerator {
+public class FirstDistanceMatrixGenerator {
 
     /**
      * Create distance matrix based on a structure, for nucleotides takes distance between P as comparison method,
@@ -10,8 +8,8 @@ public class DistanceMatrixGenerator {
      * @param struc structure
      * @return distance matrix
      */
-    public static Double[][] calcuateDistanceMatrix(Structure struc){
-        Double[][] distanceMatrix = generateMatrix(struc);
+    public static double[][] calcuateDistanceMatrix(Structure struc){
+        double[][] distanceMatrix = generateMatrix(struc);
         int moleculeCount = 0;
         for(Chain currentChain: struc.getChains()) {
             Atom mainMoleculeAtom;
@@ -47,7 +45,7 @@ public class DistanceMatrixGenerator {
      * @param struc structure
      * @return empty matrix with right size
      */
-    private static Double[][] generateMatrix(Structure struc) {
+    private static double[][] generateMatrix(Structure struc) {
         int totalSequenceLength = 0;
         for(Chain currentChain : struc.getChains()) {
             for(Group currentGroup : currentChain.getAtomGroups()){
@@ -56,14 +54,14 @@ public class DistanceMatrixGenerator {
                 }
             }
         }
-        return new Double[totalSequenceLength][totalSequenceLength];
+        return new double[totalSequenceLength][totalSequenceLength];
     }
 
     /**
      * Print the matrix
      * @param distanceMatrix matrix to print
      */
-    public static void printAmminoacidDistanceMatrix(Double[][] distanceMatrix){
+    public static void printAmminoacidDistanceMatrix(double[][] distanceMatrix){
         for (int i=0; i<distanceMatrix.length; i++) {
             for (int j=0; j<distanceMatrix.length; j++) {
                 System.out.print("pos " + i + " " + j + ": " + distanceMatrix[i][j] + " ");

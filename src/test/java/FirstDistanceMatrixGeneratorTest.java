@@ -6,18 +6,18 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
-class DistanceMatrixGeneratorTest {
+class FirstDistanceMatrixGeneratorTest {
 
     @Test
     @DisplayName("Is matrix length right? ignoring hetatms")
     void testMatrixLenght() {
         //Load a PROTEIN file
         Structure struc = loadFile("3mge");
-        assertEquals(204, DistanceMatrixGenerator.calcuateDistanceMatrix(struc).length, "Length should be 204, because we ignore HETATMS - PROTEIN TEST");
+        assertEquals(204, FirstDistanceMatrixGenerator.calcuateDistanceMatrix(struc).length, "Length should be 204, because we ignore HETATMS - PROTEIN TEST");
 
         //Load an RNA file
         struc = loadFile("4gxy");
-        assertEquals(162, DistanceMatrixGenerator.calcuateDistanceMatrix(struc).length, "Length should be 162, because we ignore HETATMS - RNA TEST");
+        assertEquals(162, FirstDistanceMatrixGenerator.calcuateDistanceMatrix(struc).length, "Length should be 162, because we ignore HETATMS - RNA TEST");
     }
 
     @Test
@@ -25,7 +25,7 @@ class DistanceMatrixGeneratorTest {
     void testMatrixValues() {
         //Load a PROTEIN file
         Structure struc = loadFile("3mge");
-        Double[][] resultMatrix = DistanceMatrixGenerator.calcuateDistanceMatrix(struc);
+        double[][] resultMatrix = FirstDistanceMatrixGenerator.calcuateDistanceMatrix(struc);
 
         //Test on the first two CA distance
         assertEquals(3.7951635010892466, resultMatrix[0][1], "Distance between the first two CA should be 3.7951...");
@@ -38,7 +38,7 @@ class DistanceMatrixGeneratorTest {
 
         //Load an RNA file
         struc = loadFile("4gxy");
-        resultMatrix = DistanceMatrixGenerator.calcuateDistanceMatrix(struc);
+        resultMatrix = FirstDistanceMatrixGenerator.calcuateDistanceMatrix(struc);
 
         //Test on the first two P distance
         assertEquals(6.002236000025325, resultMatrix[0][1], "Distance between the first two P should be 6.0022...");
