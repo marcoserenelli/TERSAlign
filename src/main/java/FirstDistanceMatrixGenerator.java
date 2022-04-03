@@ -8,7 +8,7 @@ public class FirstDistanceMatrixGenerator {
      * @param struc structure
      * @return distance matrix
      */
-    public static double[][] calcuateDistanceMatrix(Structure struc){
+    public static double[][] calculateDistanceMatrix(Structure struc){
         double[][] distanceMatrix = generateMatrix(struc);
         int moleculeCount = 0;
         for(Chain currentChain: struc.getChains()) {

@@ -2,12 +2,14 @@ import org.biojava.nbio.phylo.DistanceMatrixCalculator;
 import org.biojava.nbio.structure.*;
 import org.forester.evoinference.matrix.distance.DistanceMatrix;
 
+import java.sql.SQLOutput;
+import java.util.Arrays;
+
 public class RMSDistanceMatrixGenerator {
 
-    public static DistanceMatrix calcuateDistanceMatrix(Structure struc) {
+    public static DistanceMatrix calculateDistanceMatrix(Structure struc) {
         double[][] rmsdMat = RMSDistanceMatrixGenerator.calculateRMSDMat(struc);
-        DistanceMatrix distanceMatrix = DistanceMatrixCalculator.structuralDistance(rmsdMat,0,0,0);
-        return distanceMatrix;
+        return DistanceMatrixCalculator.structuralDistance(rmsdMat,0,0,0);
     }
 
     public static double[][] calculateRMSDMat(Structure struc){

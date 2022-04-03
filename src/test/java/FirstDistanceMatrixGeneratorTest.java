@@ -10,22 +10,22 @@ class FirstDistanceMatrixGeneratorTest {
 
     @Test
     @DisplayName("Is matrix length right? ignoring hetatms")
-    void testMatrixLenght() {
+    void testGenerateMatrix() {
         //Load a PROTEIN file
         Structure struc = loadFile("3mge");
-        assertEquals(204, FirstDistanceMatrixGenerator.calcuateDistanceMatrix(struc).length, "Length should be 204, because we ignore HETATMS - PROTEIN TEST");
+        assertEquals(204, FirstDistanceMatrixGenerator.calculateDistanceMatrix(struc).length, "Length should be 204, because we ignore HETATMS - PROTEIN TEST");
 
         //Load an RNA file
         struc = loadFile("4gxy");
-        assertEquals(162, FirstDistanceMatrixGenerator.calcuateDistanceMatrix(struc).length, "Length should be 162, because we ignore HETATMS - RNA TEST");
+        assertEquals(162, FirstDistanceMatrixGenerator.calculateDistanceMatrix(struc).length, "Length should be 162, because we ignore HETATMS - RNA TEST");
     }
 
     @Test
     @DisplayName("Are values computed right?")
-    void testMatrixValues() {
+    void testCalculateDistanceMatrix() {
         //Load a PROTEIN file
         Structure struc = loadFile("3mge");
-        double[][] resultMatrix = FirstDistanceMatrixGenerator.calcuateDistanceMatrix(struc);
+        double[][] resultMatrix = FirstDistanceMatrixGenerator.calculateDistanceMatrix(struc);
 
         //Test on the first two CA distance
         assertEquals(3.7951635010892466, resultMatrix[0][1], "Distance between the first two CA should be 3.7951...");
@@ -38,7 +38,7 @@ class FirstDistanceMatrixGeneratorTest {
 
         //Load an RNA file
         struc = loadFile("4gxy");
-        resultMatrix = FirstDistanceMatrixGenerator.calcuateDistanceMatrix(struc);
+        resultMatrix = FirstDistanceMatrixGenerator.calculateDistanceMatrix(struc);
 
         //Test on the first two P distance
         assertEquals(6.002236000025325, resultMatrix[0][1], "Distance between the first two P should be 6.0022...");

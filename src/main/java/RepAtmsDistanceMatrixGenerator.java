@@ -8,7 +8,7 @@ public class RepAtmsDistanceMatrixGenerator {
      * @param struc structure
      * @return distance matrix
      */
-    public static double[][] calcuateDistanceMatrix(Structure struc){
+    public static double[][] calculateDistanceMatrix(Structure struc){
         Atom[] representativeAtomsArray = StructureTools.getRepresentativeAtomArray(struc);
         double[][] distanceMatrix = new double[representativeAtomsArray.length][representativeAtomsArray.length];
         for(int i=0; i<representativeAtomsArray.length; i++)
