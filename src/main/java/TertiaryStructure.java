@@ -1,11 +1,16 @@
 import org.biojava.nbio.structure.*;
+import org.biojava.nbio.structure.Chain;
+import org.biojava.nbio.structure.GroupType;
+import org.biojava.nbio.structure.Structure;
 
 public class TertiaryStructure {
 
-    private Structure structure;
+    private final Structure structure;
+    private double threshold;
 
-    public TertiaryStructure(Structure structure) {
+    public TertiaryStructure(Structure structure, double threshold) {
         this.structure = structure;
+        this.threshold = threshold;
     }
 
     public double[][] getDistanceMatrix(){
@@ -18,7 +23,7 @@ public class TertiaryStructure {
      * @param struc structure
      * @return distance matrix
      */
-    public static double[][] calculateDistanceMatrix(Structure struc){
+    public double[][] calculateDistanceMatrix(Structure struc){
         Atom[] representativeAtomsArray = StructureTools.getRepresentativeAtomArray(struc);
         double[][] distanceMatrix = new double[representativeAtomsArray.length][representativeAtomsArray.length];
         for(int i=0; i<representativeAtomsArray.length; i++)
@@ -32,7 +37,7 @@ public class TertiaryStructure {
      * @param struc structure
      * @return distance matrix
      */
-    public static double[][] calculateDistanceMatrixCenterOfMass(Structure struc){
+    public double[][] calculateDistanceMatrixCenterOfMass(Structure struc){
         int groupsNumber = StructureTools.getNrGroups(struc);
         double[][] distanceMatrix = new double[groupsNumber][groupsNumber];
         int moleculeCount = 0;
@@ -64,4 +69,49 @@ public class TertiaryStructure {
         }
     }
 
+    /**
+     * Return a boolean matrix, values are true if their distance (taken from distanceMatrix)
+     * is less than threshold value.
+     * @return boolean contact matrix
+     */
+    public boolean[][] getContactMatrix(){
+        double[][] distanceMatrix = getDistanceMatrix();
+        boolean[][] distanceBool = new boolean[distanceMatrix.length][distanceMatrix.length];
+        for (int i=0; i<distanceMatrix.length; i++) {
+            for (int j = 0; j < distanceMatrix.length; j++) {
+                distanceBool[i][j] = distanceMatrix[i][j] <= this.threshold;
+                System.out.print(distanceBool[i][j] + " distance is " + distanceMatrix[i][j] + "  ");
+            }
+            System.out.println();
+        }
+        return distanceBool;
+    }
+
+    /**
+     * Returns the predominantGroupType of a structure chain
+     * @return group type
+     */
+    public GroupType getType(){
+        for(Chain c : this.structure.getChains()){
+            if(c.getPredominantGroupType() == GroupType.AMINOACID){
+                return GroupType.AMINOACID;
+            }
+            else if(c.getPredominantGroupType() == GroupType.NUCLEOTIDE){
+                return GroupType.NUCLEOTIDE;
+            }
+        }
+        return null;
+    }
+
+    public double getThreshold() {
+        return threshold;
+    }
+
+    public void setThreshold(double threshold) {
+        this.threshold = threshold;
+    }
+
+    public Structure getStructure() {
+        return structure;
+    }
 }

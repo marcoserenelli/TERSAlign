@@ -13,7 +13,9 @@ class TertiaryStructureTest {
         //Load a PROTEIN file
         Structure struc = loadFile("3mge");
 
-        double[][] resultMatrix = TertiaryStructure.calculateDistanceMatrix(struc);
+        TertiaryStructure tertiaryStructure = new TertiaryStructure(struc, 12);
+
+        double[][] resultMatrix = tertiaryStructure.calculateDistanceMatrix(struc);
 
         //Check matrix length
         assertEquals(204, resultMatrix.length, "Matrix length should be 204");
@@ -28,7 +30,9 @@ class TertiaryStructureTest {
 
         //Load an RNA file
         struc = loadFile("4gxy");
-        resultMatrix = TertiaryStructure.calculateDistanceMatrix(struc);
+        tertiaryStructure = new TertiaryStructure(struc, 12);
+
+        resultMatrix = tertiaryStructure.calculateDistanceMatrix(struc);
 
         //Check matrix length
         assertEquals(162, resultMatrix.length, "Matrix length should be 162");
