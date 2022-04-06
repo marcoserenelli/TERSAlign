@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class RepAtmsDistanceMatrixGeneratorTest {
+class TertiaryStructureTest {
 
     @Test
     @DisplayName("Are values computed right?")
@@ -13,7 +13,7 @@ class RepAtmsDistanceMatrixGeneratorTest {
         //Load a PROTEIN file
         Structure struc = loadFile("3mge");
 
-        double[][] resultMatrix = RepAtmsDistanceMatrixGenerator.calculateDistanceMatrix(struc);
+        double[][] resultMatrix = TertiaryStructure.calculateDistanceMatrix(struc);
 
         //Check matrix length
         assertEquals(204, resultMatrix.length, "Matrix length should be 204");
@@ -28,7 +28,7 @@ class RepAtmsDistanceMatrixGeneratorTest {
 
         //Load an RNA file
         struc = loadFile("4gxy");
-        resultMatrix = RepAtmsDistanceMatrixGenerator.calculateDistanceMatrix(struc);
+        resultMatrix = TertiaryStructure.calculateDistanceMatrix(struc);
 
         //Check matrix length
         assertEquals(162, resultMatrix.length, "Matrix length should be 162");
