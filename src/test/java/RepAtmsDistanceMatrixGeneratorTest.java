@@ -17,7 +17,6 @@ class RepAtmsDistanceMatrixGeneratorTest {
 
         //Check matrix length
         assertEquals(204, resultMatrix.length, "Matrix length should be 204");
-
         //Test on the first two CA distance
         assertEquals(3.7951635010892466, resultMatrix[0][1], "Distance between the first two CA should be 3.7951...");
 

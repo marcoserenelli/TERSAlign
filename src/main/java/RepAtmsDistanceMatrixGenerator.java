@@ -18,6 +18,30 @@ public class RepAtmsDistanceMatrixGenerator {
     }
 
     /**
+     * Create distance matrix based on a structure, considering aminos / nucleotide's center of mass
+     * @param struc structure
+     * @return distance matrix
+     */
+    public static double[][] calculateDistanceMatrixCenterOfMass(Structure struc){
+        int groupsNumber = StructureTools.getNrGroups(struc);
+        double[][] distanceMatrix = new double[groupsNumber][groupsNumber];
+        int moleculeCount = 0;
+        for(Chain currentChain: struc.getChains()) {
+            for (Group currentMolecule : currentChain.getAtomGroups()) {
+                int comparedMoleculeCount = 0;
+                for (Chain comparisonChain : struc.getChains()) {
+                    for (Group comparisonMolecule : comparisonChain.getAtomGroups()) {
+                        distanceMatrix[moleculeCount][comparedMoleculeCount] = Calc.getDistance(Calc.centerOfMass(currentMolecule.getAtoms().toArray(new Atom[0])), Calc.centerOfMass(comparisonMolecule.getAtoms().toArray(new Atom[0])));
+                        comparedMoleculeCount++;
+                    }
+                }
+                moleculeCount++;
+            }
+        }
+        return distanceMatrix;
+    }
+
+    /**
      * Print the matrix
      * @param distanceMatrix matrix to print
      */

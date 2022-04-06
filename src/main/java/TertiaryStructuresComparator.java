@@ -17,6 +17,7 @@ public class TertiaryStructuresComparator {
         String filename = "3mge";
         try{
             Structure struc = pdbreader.getStructureById(filename);
+            RepAtmsDistanceMatrixGenerator.printAmminoacidDistanceMatrix(RepAtmsDistanceMatrixGenerator.calculateDistanceMatrixCenterOfMass(struc));
 
             /*
             AtomCache cache = new AtomCache();
