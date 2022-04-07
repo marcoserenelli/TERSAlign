@@ -2,19 +2,53 @@ import org.biojava.nbio.structure.*;
 import org.biojava.nbio.structure.Chain;
 import org.biojava.nbio.structure.GroupType;
 import org.biojava.nbio.structure.Structure;
+import org.jgrapht.alg.util.Pair;
+
+import java.util.ArrayList;
 
 public class TertiaryStructure {
 
     private final Structure structure;
     private double threshold;
 
-    public TertiaryStructure(Structure structure, double threshold) {
+    public TertiaryStructure(Structure structure) {
         this.structure = structure;
-        this.threshold = threshold;
+        this.threshold = 4.0;
     }
 
     public double[][] getDistanceMatrix(){
-        return calculateDistanceMatrix(this.structure);
+        return calculateDistanceMatrixCenterOfMass(this.structure);
+    }
+
+    /**
+     * Generates a list containing the indexes of bonded nucleotides/aminos, that is all nucleotides/aminos closer than the specified threshold.
+     * @return bond list
+     */
+    public ArrayList<Pair<Integer, Integer>> getBondList(){
+        boolean[][]contactMap = this.getContactMap(this.threshold);
+        ArrayList<Pair<Integer, Integer>>bondList = new ArrayList<>();
+        for(int i=0; i<contactMap.length; i++)
+            for(int j=0; j<contactMap.length; j++)
+                if(contactMap[i][j]) {
+                    bondList.add(new Pair<>(i, j));
+                }
+        return bondList;
+    }
+
+    /**
+     * Return a boolean matrix, values are true if their distance (taken from distanceMatrix)
+     * is less than threshold value.
+     * @return boolean contact matrix
+     */
+    public boolean[][] getContactMap(double threshold){
+        double[][] distanceMatrix = getDistanceMatrix();
+        boolean[][] contactMatrix = new boolean[distanceMatrix.length][distanceMatrix.length];
+        for (int i=0; i<distanceMatrix.length; i++) {
+            for (int j = 0; j < distanceMatrix.length; j++) {
+                contactMatrix[i][j] = distanceMatrix[i][j] <= threshold;
+            }
+        }
+        return contactMatrix;
     }
 
     /**
@@ -28,7 +62,8 @@ public class TertiaryStructure {
         double[][] distanceMatrix = new double[representativeAtomsArray.length][representativeAtomsArray.length];
         for(int i=0; i<representativeAtomsArray.length; i++)
             for(int j=0; j<representativeAtomsArray.length; j++)
-                distanceMatrix[i][j] = Calc.getDistance(representativeAtomsArray[i],representativeAtomsArray[j]);
+                distanceMatrix[i][j] = Calc.getDistance(representativeAtomsArray[i], representativeAtomsArray[j]);
+        printDistanceMatrix(distanceMatrix);
         return distanceMatrix;
     }
 
@@ -41,18 +76,19 @@ public class TertiaryStructure {
         int groupsNumber = StructureTools.getNrGroups(struc);
         double[][] distanceMatrix = new double[groupsNumber][groupsNumber];
         int moleculeCount = 0;
-        for(Chain currentChain: struc.getChains()) {
+        for(Chain currentChain: struc.getChains())
             for (Group currentMolecule : currentChain.getAtomGroups()) {
                 int comparedMoleculeCount = 0;
-                for (Chain comparisonChain : struc.getChains()) {
+                for (Chain comparisonChain : struc.getChains())
                     for (Group comparisonMolecule : comparisonChain.getAtomGroups()) {
-                        distanceMatrix[moleculeCount][comparedMoleculeCount] = Calc.getDistance(Calc.centerOfMass(currentMolecule.getAtoms().toArray(new Atom[0])), Calc.centerOfMass(comparisonMolecule.getAtoms().toArray(new Atom[0])));
+                        if(currentMolecule.getType() != GroupType.HETATM && comparisonMolecule.getType() != GroupType.HETATM)
+                            distanceMatrix[moleculeCount][comparedMoleculeCount] = Calc.getDistance(Calc.centerOfMass(currentMolecule.getAtoms().toArray(new Atom[0])), Calc.centerOfMass(comparisonMolecule.getAtoms().toArray(new Atom[0])));
+                        else distanceMatrix[moleculeCount][comparedMoleculeCount] = Double.MAX_VALUE;
                         comparedMoleculeCount++;
                     }
-                }
                 moleculeCount++;
             }
-        }
+        printDistanceMatrix(distanceMatrix);
         return distanceMatrix;
     }
 
@@ -67,24 +103,6 @@ public class TertiaryStructure {
             }
             System.out.println();
         }
-    }
-
-    /**
-     * Return a boolean matrix, values are true if their distance (taken from distanceMatrix)
-     * is less than threshold value.
-     * @return boolean contact matrix
-     */
-    public boolean[][] getContactMatrix(){
-        double[][] distanceMatrix = getDistanceMatrix();
-        boolean[][] distanceBool = new boolean[distanceMatrix.length][distanceMatrix.length];
-        for (int i=0; i<distanceMatrix.length; i++) {
-            for (int j = 0; j < distanceMatrix.length; j++) {
-                distanceBool[i][j] = distanceMatrix[i][j] <= this.threshold;
-                System.out.print(distanceBool[i][j] + " distance is " + distanceMatrix[i][j] + "  ");
-            }
-            System.out.println();
-        }
-        return distanceBool;
     }
 
     /**

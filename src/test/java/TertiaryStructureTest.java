@@ -13,7 +13,7 @@ class TertiaryStructureTest {
         //Load a PROTEIN file
         Structure struc = loadFile("3mge");
 
-        TertiaryStructure tertiaryStructure = new TertiaryStructure(struc, 12);
+        TertiaryStructure tertiaryStructure = new TertiaryStructure(struc);
 
         double[][] resultMatrix = tertiaryStructure.calculateDistanceMatrix(struc);
 
@@ -30,7 +30,7 @@ class TertiaryStructureTest {
 
         //Load an RNA file
         struc = loadFile("4gxy");
-        tertiaryStructure = new TertiaryStructure(struc, 12);
+        tertiaryStructure = new TertiaryStructure(struc);
 
         resultMatrix = tertiaryStructure.calculateDistanceMatrix(struc);
 
