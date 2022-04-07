@@ -26,12 +26,16 @@ public class TertiaryStructure {
      */
     public ArrayList<Pair<Integer, Integer>> getBondList(){
         boolean[][]contactMap = this.getContactMap(this.threshold);
+        System.out.println(contactMap.length + " " + contactMap[0].length);
         ArrayList<Pair<Integer, Integer>>bondList = new ArrayList<>();
-        for(int i=0; i<contactMap.length; i++)
-            for(int j=0; j<contactMap.length; j++)
-                if(contactMap[i][j]) {
+        int colCount = 0;
+        for(int i=0; i<contactMap.length; i++) {
+            for (int j = colCount; j < contactMap.length; j++)
+                if (contactMap[i][j]) {
                     bondList.add(new Pair<>(i, j));
                 }
+            colCount++;
+        }
         return bondList;
     }
 
