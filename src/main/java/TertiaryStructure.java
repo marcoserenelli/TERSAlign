@@ -16,8 +16,20 @@ public class TertiaryStructure {
         this.threshold = 4.0;
     }
 
-    public double[][] getDistanceMatrix(){
+    /**
+     * Return the distance matrix using centerOfMass
+     * @return distance matrix using center of mass method
+     */
+    public double[][] getDistanceMatrixCenterOfMass(){
         return calculateDistanceMatrixCenterOfMass(this.structure);
+    }
+
+    /**
+     * Return the distance matrix using default calculation method
+     * @return distance matrix using default calculation method
+     */
+    public double[][] getDistanceMatrixDefault(){
+        return calculateDistanceMatrix(this.structure);
     }
 
     /**
@@ -25,7 +37,7 @@ public class TertiaryStructure {
      * @return bond list
      */
     public ArrayList<Pair<Integer, Integer>> getBondList(){
-        boolean[][]contactMap = this.getContactMap(this.threshold);
+        boolean[][]contactMap = this.getContactMatrixCenterOfMass();
         System.out.println(contactMap.length + " " + contactMap[0].length);
         ArrayList<Pair<Integer, Integer>>bondList = new ArrayList<>();
         int colCount = 0;
@@ -44,15 +56,46 @@ public class TertiaryStructure {
      * is less than threshold value.
      * @return boolean contact matrix
      */
-    public boolean[][] getContactMap(double threshold){
-        double[][] distanceMatrix = getDistanceMatrix();
+    public boolean[][] getContactMatrixCenterOfMass(){
+        double[][] distanceMatrix = getDistanceMatrixCenterOfMass();
         boolean[][] contactMatrix = new boolean[distanceMatrix.length][distanceMatrix.length];
         for (int i=0; i<distanceMatrix.length; i++) {
             for (int j = 0; j < distanceMatrix.length; j++) {
-                contactMatrix[i][j] = distanceMatrix[i][j] <= threshold;
+                contactMatrix[i][j] = distanceMatrix[i][j] <= this.threshold;
             }
         }
         return contactMatrix;
+    }
+
+    /**
+     * Return a boolean matrix, values are true if their distance (taken from default calculation)
+     * is less than threshold value.
+     * @return boolean contact matrix
+     */
+    public boolean[][] getContactMatrixDefault(){
+        double[][] distanceMatrix = getDistanceMatrixDefault();
+        boolean[][] contactMatrix = new boolean[distanceMatrix.length][distanceMatrix.length];
+        for (int i=0; i<distanceMatrix.length; i++) {
+            for (int j = 0; j < distanceMatrix.length; j++) {
+                contactMatrix[i][j] = distanceMatrix[i][j] <= this.threshold;
+            }
+        }
+        return contactMatrix;
+    }
+
+    /**
+     * Temporary method with center of mass calculation for contact matrix
+     * @return boolean contact matrix
+     */
+    public boolean[][] getContactMatrixDistanceCenterOfMass(){
+        double[][] distanceMatrix = calculateDistanceMatrixCenterOfMass(this.structure);
+        boolean[][] distanceBool = new boolean[distanceMatrix.length][distanceMatrix.length];
+        for (int i=0; i<distanceMatrix.length; i++) {
+            for (int j = 0; j < distanceMatrix.length; j++) {
+                distanceBool[i][j] = distanceMatrix[i][j] <= this.threshold;
+            }
+        }
+        return distanceBool;
     }
 
     /**
@@ -97,13 +140,26 @@ public class TertiaryStructure {
     }
 
     /**
-     * Print the matrix
+     * Print the distance matrix
      * @param distanceMatrix matrix to print
      */
-    public static void printDistanceMatrix(double[][] distanceMatrix){
+    public void printDistanceMatrix(double[][] distanceMatrix){
         for (int i=0; i<distanceMatrix.length; i++) {
             for (int j=0; j<distanceMatrix.length; j++) {
                 System.out.print("pos " + i + " " + j + ": " + distanceMatrix[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    /**
+     * Print the contact matrix
+     * @param contactMatrix contact matrix to print
+     */
+    public void printContactMatrix(boolean[][] contactMatrix){
+        for (int i=0; i< contactMatrix.length; i++) {
+            for (int j=0; j<contactMatrix.length; j++) {
+                System.out.print("pos " + i + " " + j + ": " + contactMatrix[i][j] + " ");
             }
             System.out.println();
         }
