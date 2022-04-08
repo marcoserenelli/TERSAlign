@@ -11,8 +11,7 @@ public class TertiaryStructuresComparator {
             Structure structure = pdbReader.getStructureById(filename);
             TertiaryStructure tertiaryStructure = new TertiaryStructure(structure);
             tertiaryStructure.setThreshold(8.0);
-            tertiaryStructure.getBondList().forEach(p -> System.out.println("first: " + p.getFirst() + ", second: " + p.getSecond()));
-            System.out.println(tertiaryStructure.getBondList().size());
+            tertiaryStructure.getBondList();
             System.out.println(tertiaryStructure.getType());
         } catch (Exception e){
             e.printStackTrace();

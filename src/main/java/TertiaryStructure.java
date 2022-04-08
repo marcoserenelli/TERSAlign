@@ -21,7 +21,7 @@ public class TertiaryStructure {
      * @return distance matrix using center of mass method
      */
     public double[][] getDistanceMatrixCenterOfMass(){
-        return calculateDistanceMatrixCenterOfMass(this.structure);
+        return calculateDistanceMatrixCenterOfMassIgnoreHeta(this.structure);
     }
 
     /**
@@ -38,7 +38,6 @@ public class TertiaryStructure {
      */
     public ArrayList<Pair<Integer, Integer>> getBondList(){
         boolean[][]contactMap = this.getContactMatrixCenterOfMass();
-        System.out.println(contactMap.length + " " + contactMap[0].length);
         ArrayList<Pair<Integer, Integer>>bondList = new ArrayList<>();
         int colCount = 0;
         for(int i=0; i<contactMap.length; i++) {
@@ -84,28 +83,13 @@ public class TertiaryStructure {
     }
 
     /**
-     * Temporary method with center of mass calculation for contact matrix
-     * @return boolean contact matrix
-     */
-    public boolean[][] getContactMatrixDistanceCenterOfMass(){
-        double[][] distanceMatrix = calculateDistanceMatrixCenterOfMass(this.structure);
-        boolean[][] distanceBool = new boolean[distanceMatrix.length][distanceMatrix.length];
-        for (int i=0; i<distanceMatrix.length; i++) {
-            for (int j = 0; j < distanceMatrix.length; j++) {
-                distanceBool[i][j] = distanceMatrix[i][j] <= this.threshold;
-            }
-        }
-        return distanceBool;
-    }
-
-    /**
      * Create distance matrix based on a structure, for nucleotides takes distance between P as comparison method,
      * for amino acid takes distance between CA as comparison method
      * @param struc structure
      * @return distance matrix
      */
     public double[][] calculateDistanceMatrix(Structure struc){
-        Atom[] representativeAtomsArray = StructureTools.getRepresentativeAtomArray(struc);
+        Atom[] representativeAtomsArray = StructureTools.getRepresentativeAtomArray(struc);    //questa operazione ignora tutti gli hetatms
         double[][] distanceMatrix = new double[representativeAtomsArray.length][representativeAtomsArray.length];
         for(int i=0; i<representativeAtomsArray.length; i++)
             for(int j=0; j<representativeAtomsArray.length; j++)
@@ -139,6 +123,43 @@ public class TertiaryStructure {
         return distanceMatrix;
     }
 
+
+    /**
+     * Create distance matrix based on a structure, considering aminos / nucleotide's center of mass
+     * @param struc structure
+     * @return distance matrix
+     */
+    public double[][] calculateDistanceMatrixCenterOfMassIgnoreHeta(Structure struc){
+        int groupsNumber = getNonHetatmGroupsCounter(struc);
+        double[][] distanceMatrix = new double[groupsNumber][groupsNumber];
+        int moleculeCount = 0;
+        for(Chain currentChain: struc.getChains())
+            for (Group currentMolecule : currentChain.getAtomGroups()) {
+                if (currentMolecule.getType() != GroupType.HETATM) {
+                    int comparedMoleculeCount = 0;
+                    for (Chain comparisonChain : struc.getChains()) {
+                        for (Group comparisonMolecule : comparisonChain.getAtomGroups()) {
+                            if (comparisonMolecule.getType() != GroupType.HETATM) {
+                                distanceMatrix[moleculeCount][comparedMoleculeCount] = Calc.getDistance(Calc.centerOfMass(currentMolecule.getAtoms().toArray(new Atom[0])), Calc.centerOfMass(comparisonMolecule.getAtoms().toArray(new Atom[0])));
+                                comparedMoleculeCount++;
+                            }
+                        }
+                    }
+                    moleculeCount++;
+                }
+            }
+        printDistanceMatrix(distanceMatrix);
+        return distanceMatrix;
+    }
+
+    private int getNonHetatmGroupsCounter(Structure struc){
+        int nonHetatmGroupsCounter = 0;
+        for(Chain currentChain : struc.getChains())
+            for(Group currentGroup : currentChain.getAtomGroups())
+                if(currentGroup.getType() != GroupType.HETATM)
+                    nonHetatmGroupsCounter++;
+        return nonHetatmGroupsCounter;
+    }
     /**
      * Print the distance matrix
      * @param distanceMatrix matrix to print

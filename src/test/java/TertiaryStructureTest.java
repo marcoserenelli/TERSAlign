@@ -297,7 +297,7 @@ class TertiaryStructureTest {
         //USING 12 AS THRESHOLD
 
         //Check if matrix length is right
-        assertEquals(actualContactMatrix.length, tertiaryStructure.getContactMatrixDistanceCenterOfMass().length, "contact matrix length should be the same as distance matrix length");
+        assertEquals(actualContactMatrix.length, tertiaryStructure.getContactMatrixCenterOfMass().length, "contact matrix length should be the same as distance matrix length");
 
         //First value should be not be equal to himself.
         assertFalse(actualContactMatrix[0][0], "first value should not be equal to himself");
@@ -320,21 +320,21 @@ class TertiaryStructureTest {
         //Changing threshold to 20 should make 7 - 3 true
         tertiaryStructure.setThreshold(20);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixDistanceCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
         //Should be true
         assertTrue(actualContactMatrix[7][3], "7 - 3 should be true, with threshold 20, value is 17.4826...");
 
         //Changing threshold to 4 should make 32 - 35 false
         tertiaryStructure.setThreshold(4);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixDistanceCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
         //Should be false
         assertFalse(actualContactMatrix[32][35], "32 - 35 should be false with threshold 4, value is 14.3414...");
 
         //Changing threshold to 49
         tertiaryStructure.setThreshold(49);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixDistanceCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
         //Should be false
         assertTrue(actualContactMatrix[132][35], "132 - 35 should be true with threshold 49, value is 48.6214...");
 
