@@ -15,7 +15,8 @@ class TertiaryStructureTest {
 
         TertiaryStructure tertiaryStructure = new TertiaryStructure(struc);
 
-        double[][] resultMatrix = tertiaryStructure.calculateDistanceMatrix(struc);
+        tertiaryStructure.setDistanceMatrixCalculationMethod("Default");
+        double[][] resultMatrix = tertiaryStructure.getDistanceMatrix();
 
         //Check matrix length
         assertEquals(204, resultMatrix.length, "Matrix length should be 204");
@@ -38,8 +39,8 @@ class TertiaryStructureTest {
         //Load an RNA file
         struc = loadFile("4gxy");
         tertiaryStructure = new TertiaryStructure(struc);
-
-        resultMatrix = tertiaryStructure.calculateDistanceMatrix(struc);
+        tertiaryStructure.setDistanceMatrixCalculationMethod("Default");
+        resultMatrix = tertiaryStructure.getDistanceMatrix();
 
         //Check matrix length
         assertEquals(162, resultMatrix.length, "Matrix length should be 162");
@@ -69,16 +70,17 @@ class TertiaryStructureTest {
 
         TertiaryStructure tertiaryStructure = new TertiaryStructure(struc);
 
-        double[][] resultMatrix = tertiaryStructure.calculateDistanceMatrixCenterOfMass(struc);
+        tertiaryStructure.setDistanceMatrixCalculationMethod("CenterOfMass");
+        double[][] resultMatrix = tertiaryStructure.getDistanceMatrix();
 
         //Check matrix length
-        assertEquals(346, resultMatrix.length, "Matrix length should be 346");
+        assertEquals(204, resultMatrix.length, "Matrix length should be 204");
 
         //Test the first value with himself
         assertEquals(0,resultMatrix[0][0], "Distance should be 0");
 
         //Test the last value with himself
-        assertEquals(Double.MAX_VALUE,resultMatrix[resultMatrix.length-1][resultMatrix.length-1], "Distance should be MAX VALUE");
+        assertEquals(0.0,resultMatrix[resultMatrix.length-1][resultMatrix.length-1], "Distance should be 0");
 
         //Test on the first two distance
         assertEquals(4.620100901228067, resultMatrix[0][1], "Distance should be 4.6201...");
@@ -87,34 +89,35 @@ class TertiaryStructureTest {
         assertEquals(5.236362921223696, resultMatrix[35][32], "Distance should be 5.2363...");
 
         //Test on the last two CA distance
-        assertEquals(Double.MAX_VALUE, resultMatrix[resultMatrix.length-2][resultMatrix.length-1], "Distance should be MAX VALUE...");
+        assertEquals(5.751582341272176, resultMatrix[resultMatrix.length-2][resultMatrix.length-1], "Distance should be 5.7515...");
 
 
         //Load an RNA file
         struc = loadFile("4gxy");
         tertiaryStructure = new TertiaryStructure(struc);
 
-        resultMatrix = tertiaryStructure.calculateDistanceMatrixCenterOfMass(struc);
+        tertiaryStructure.setDistanceMatrixCalculationMethod("CenterOfMass");
+        resultMatrix = tertiaryStructure.getDistanceMatrix();
 
         //Check matrix length
-        assertEquals(175, resultMatrix.length, "Matrix length should be 175");
+        assertEquals(162, resultMatrix.length, "Matrix length should be 175");
 
         //Test the first value with himself
-        assertEquals(Double.MAX_VALUE,resultMatrix[0][0], "Distance should be MAX VALUE");
+        assertEquals(0,resultMatrix[0][0], "Distance should be 0");
 
         //Test the last value with himself
-        assertEquals(Double.MAX_VALUE,resultMatrix[resultMatrix.length-1][resultMatrix.length-1], "Distance should be MAX VALUE");
+        assertEquals(0,resultMatrix[resultMatrix.length-1][resultMatrix.length-1], "Distance should be 0");
 
         //Test on the first two distance
-        assertEquals(Double.MAX_VALUE, resultMatrix[0][1], "Distance should be MAX VALUE");
+        assertEquals(4.235092167400089, resultMatrix[0][1], "Distance should be 4.2350...");
 
         //Test on two randoms distance in the middle
-        assertEquals(14.3414881620807, resultMatrix[35][32], "Distance should be 14.3414...");
+        assertEquals(17.071554573913147, resultMatrix[35][32], "Distance should be 17.0715...");
 
-        assertEquals(30.881515689238928, resultMatrix[160][32], "Distance should be 30.881515689238928");
+        assertEquals(34.05658516896883, resultMatrix[160][32], "Distance should be 34.0565...");
 
         //Test on the last two P distance
-        assertEquals(Double.MAX_VALUE, resultMatrix[resultMatrix.length-2][resultMatrix.length-1], "Distance should be MAX VALUE...");
+        assertEquals(6.53266416258413, resultMatrix[resultMatrix.length-2][resultMatrix.length-1], "Distance should be 6.5326...");
     }
 
     @Test
@@ -126,12 +129,13 @@ class TertiaryStructureTest {
         TertiaryStructure tertiaryStructure = new TertiaryStructure(struc);
         tertiaryStructure.setThreshold(12);
 
-        boolean[][] actualContactMatrix = tertiaryStructure.getContactMatrixDefault();
+        tertiaryStructure.setDistanceMatrixCalculationMethod("Default");
+        boolean[][] actualContactMatrix = tertiaryStructure.getContactMatrix();
 
         //USING 12 AS THRESHOLD
 
         //Check if matrix length is right
-        assertEquals(actualContactMatrix.length, tertiaryStructure.getDistanceMatrixDefault().length, "contact matrix length should be the same as distance matrix length");
+        assertEquals(actualContactMatrix.length, tertiaryStructure.getDistanceMatrix().length, "contact matrix length should be the same as distance matrix length");
 
         //First value should be equal to himself.
         assertTrue(actualContactMatrix[0][0], "first value should always be equal to himself");
@@ -154,21 +158,21 @@ class TertiaryStructureTest {
         //Changing threshold to 14 should make 7 - 3 true
         tertiaryStructure.setThreshold(14);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixDefault();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be true
         assertTrue(actualContactMatrix[7][3], "7 - 3 should be true, with threshold 14, value is 13.3787...");
 
         //Changing threshold to 4 should make 32 - 35 false
         tertiaryStructure.setThreshold(4);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixDefault();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be false
         assertFalse(actualContactMatrix[32][35], "32 - 35 should be false with threshold 4, value is 5.0299...");
 
         //Changing threshold to 51
         tertiaryStructure.setThreshold(51);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixDefault();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be false
         assertFalse(actualContactMatrix[190][2], "190 - 2 should be false with threshold 51, value is 51.8775...");
 
@@ -177,17 +181,17 @@ class TertiaryStructureTest {
         struc = loadFile("4gxy");
         tertiaryStructure = new TertiaryStructure(struc);
         tertiaryStructure.setThreshold(12);
-        actualContactMatrix = tertiaryStructure.getContactMatrixDefault();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
 
-        tertiaryStructure.printContactMatrix(actualContactMatrix);
+        tertiaryStructure.printContactMatrix();
         System.out.println(actualContactMatrix.length);
-        tertiaryStructure.printDistanceMatrix(tertiaryStructure.getDistanceMatrixDefault());
+        tertiaryStructure.printDistanceMatrix();
 
 
         //USING 12 AS THRESHOLD
 
         //Check if matrix length is right
-        assertEquals(actualContactMatrix.length, tertiaryStructure.getContactMatrixDefault().length, "contact matrix length should be the same as distance matrix length");
+        assertEquals(actualContactMatrix.length, tertiaryStructure.getContactMatrix().length, "contact matrix length should be the same as distance matrix length");
 
         //First value should be equal to himself.
         assertTrue(actualContactMatrix[0][0], "first value should always be equal to himself");
@@ -210,21 +214,21 @@ class TertiaryStructureTest {
         //Changing threshold to 20 should make 7 - 3 true
         tertiaryStructure.setThreshold(20);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixDefault();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be true
         assertTrue(actualContactMatrix[7][3], "7 - 3 should be true, with threshold 20, value is 19.8870...");
 
         //Changing threshold to 4 should make 32 - 35 false
         tertiaryStructure.setThreshold(4);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixDefault();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be false
         assertFalse(actualContactMatrix[32][35], "32 - 35 should be false with threshold 4, value is 17.0535...");
 
         //Changing threshold to 41
         tertiaryStructure.setThreshold(41);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixDefault();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be false
         assertFalse(actualContactMatrix[132][35], "132 - 35 should be false with threshold 41, value is 41.3573...");
     }
@@ -237,25 +241,25 @@ class TertiaryStructureTest {
         TertiaryStructure tertiaryStructure = new TertiaryStructure(struc);
         tertiaryStructure.setThreshold(12);
 
-        boolean[][] actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
-
+        tertiaryStructure.setDistanceMatrixCalculationMethod("CenterOfMass");
+        boolean[][] actualContactMatrix = tertiaryStructure.getContactMatrix();
 
         //USING 12 AS THRESHOLD
 
         //Check if matrix length is right
-        assertEquals(actualContactMatrix.length, tertiaryStructure.getContactMatrixCenterOfMass().length, "contact matrix length should be the same as distance matrix length");
+        assertEquals(actualContactMatrix.length, tertiaryStructure.getContactMatrix().length, "contact matrix length should be the same as distance matrix length");
 
         //First value should be equal to himself.
         assertTrue(actualContactMatrix[0][0], "first value should be equal to himself");
 
-        //Last value should not be to himself.
-        assertFalse(actualContactMatrix[actualContactMatrix.length-1][actualContactMatrix.length-1], "last value should not be equal to himself");
+        //Last value should be equal to himself.
+        assertTrue(actualContactMatrix[actualContactMatrix.length-1][actualContactMatrix.length-1], "last value should be equal to himself");
 
         //Should be true, distance is 4.6201...
         assertTrue(actualContactMatrix[0][1], "first with second value should be true, distance is 4.6201...");
 
         //Should be true, distance is 3.7994
-        assertFalse(actualContactMatrix[actualContactMatrix.length-1][actualContactMatrix.length-2], "last two values should be true, distance is MAX DOUBLE VALUE...");
+        assertTrue(actualContactMatrix[actualContactMatrix.length-1][actualContactMatrix.length-2], "last two values should be true, distance is 3.7994...");
 
         //Should be true, distance is 5.2363...
         assertTrue(actualContactMatrix[32][35], "32 - 35 value should be true, distance is 5.2363...");
@@ -266,21 +270,21 @@ class TertiaryStructureTest {
         //Changing threshold to 14 should make 7 - 3 true
         tertiaryStructure.setThreshold(14);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be true
         assertTrue(actualContactMatrix[7][3], "7 - 3 should be true, with threshold 14, value is 13.6747...");
 
         //Changing threshold to 4 should make 32 - 35 false
         tertiaryStructure.setThreshold(4);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be false
         assertFalse(actualContactMatrix[32][35], "32 - 35 should be false with threshold 4, value is 5.2363...");
 
         //Changing threshold to 51
         tertiaryStructure.setThreshold(51);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be false
         assertFalse(actualContactMatrix[190][2], "190 - 2 should be false with threshold 51, value is 51.5449...");
 
@@ -289,27 +293,27 @@ class TertiaryStructureTest {
         struc = loadFile("4gxy");
         tertiaryStructure = new TertiaryStructure(struc);
         tertiaryStructure.setThreshold(12);
-        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
 
-        tertiaryStructure.printContactMatrix(actualContactMatrix);
-        tertiaryStructure.printDistanceMatrix(tertiaryStructure.getDistanceMatrixCenterOfMass());
+        tertiaryStructure.printContactMatrix();
+        tertiaryStructure.printDistanceMatrix();
 
         //USING 12 AS THRESHOLD
 
         //Check if matrix length is right
-        assertEquals(actualContactMatrix.length, tertiaryStructure.getContactMatrixCenterOfMass().length, "contact matrix length should be the same as distance matrix length");
+        assertEquals(actualContactMatrix.length, tertiaryStructure.getContactMatrix().length, "contact matrix length should be the same as distance matrix length");
 
         //First value should be not be equal to himself.
-        assertFalse(actualContactMatrix[0][0], "first value should not be equal to himself");
+        assertTrue(actualContactMatrix[0][0], "first value should be equal to himself");
 
         //Last value should not be equal to himself.
-        assertFalse(actualContactMatrix[actualContactMatrix.length-1][actualContactMatrix.length-1], "last value should not be equal to himself");
+        assertTrue(actualContactMatrix[actualContactMatrix.length-1][actualContactMatrix.length-1], "last value should be equal to himself");
 
-        //Should be false, distance is MAX DOBULE...
-        assertFalse(actualContactMatrix[0][1], "first with second value should be false, distance is MAX DOUBLE...");
+        //Should be true
+        assertTrue(actualContactMatrix[0][1], "first with second value should be true");
 
-        //Should be false, distance is MAX DOUBLE
-        assertFalse(actualContactMatrix[actualContactMatrix.length-1][actualContactMatrix.length-2], "last two values should be false, distance is MAX VALUE...");
+        //Should be true
+        assertTrue(actualContactMatrix[actualContactMatrix.length-1][actualContactMatrix.length-2], "last two values should be true");
 
         //Should be false, distance is 14.3414...
         assertFalse(actualContactMatrix[32][35], "32 - 35 value should be true, distance is 14.3414...");
@@ -320,21 +324,21 @@ class TertiaryStructureTest {
         //Changing threshold to 20 should make 7 - 3 true
         tertiaryStructure.setThreshold(20);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be true
         assertTrue(actualContactMatrix[7][3], "7 - 3 should be true, with threshold 20, value is 17.4826...");
 
         //Changing threshold to 4 should make 32 - 35 false
         tertiaryStructure.setThreshold(4);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be false
         assertFalse(actualContactMatrix[32][35], "32 - 35 should be false with threshold 4, value is 14.3414...");
 
         //Changing threshold to 49
         tertiaryStructure.setThreshold(49);
         //Re-calculate contact matrix with new threshold
-        actualContactMatrix = tertiaryStructure.getContactMatrixCenterOfMass();
+        actualContactMatrix = tertiaryStructure.getContactMatrix();
         //Should be false
         assertTrue(actualContactMatrix[132][35], "132 - 35 should be true with threshold 49, value is 48.6214...");
 
@@ -347,15 +351,15 @@ class TertiaryStructureTest {
         Structure struc = loadFile("3mge");
         TertiaryStructure tertiaryStructure = new TertiaryStructure(struc);
 
-        //Should be amminoacid
-        assertEquals(GroupType.AMINOACID, tertiaryStructure.getType());
+        //Should be protein
+        assertEquals("PROTEIN", tertiaryStructure.getType());
 
         //Load an RNA file
         struc = loadFile("4gxy");
         tertiaryStructure = new TertiaryStructure(struc);
 
-        //Should be nucleotide
-        assertEquals(GroupType.NUCLEOTIDE, tertiaryStructure.getType());
+        //Should be rna
+        assertEquals("RNA", tertiaryStructure.getType());
     }
 
     /**
