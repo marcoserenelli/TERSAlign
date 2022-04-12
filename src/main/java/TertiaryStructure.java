@@ -20,8 +20,12 @@ public class TertiaryStructure {
      * Return the distance matrix using centerOfMass
      * @return distance matrix using center of mass method
      */
-    public double[][] getDistanceMatrixCenterOfMass(){
+    public double[][] getDistanceMatrixCenterOfMassIgnoreHeta(){
         return calculateDistanceMatrixCenterOfMassIgnoreHeta(this.structure);
+    }
+
+    public double[][] getDistanceMatrixCenterOfMass(){
+        return calculateDistanceMatrixCenterOfMass(this.structure);
     }
 
     /**
@@ -37,7 +41,7 @@ public class TertiaryStructure {
      * @return bond list
      */
     public ArrayList<Pair<Integer, Integer>> getBondList(){
-        boolean[][]contactMap = this.getContactMatrixCenterOfMass();
+        boolean[][]contactMap = this.getContactMatrixCenterOfMassIgnoreHeta();
         ArrayList<Pair<Integer, Integer>>bondList = new ArrayList<>();
         int colCount = 0;
         for(int i=0; i<contactMap.length; i++) {
@@ -55,6 +59,17 @@ public class TertiaryStructure {
      * is less than threshold value.
      * @return boolean contact matrix
      */
+    public boolean[][] getContactMatrixCenterOfMassIgnoreHeta(){
+        double[][] distanceMatrix = getDistanceMatrixCenterOfMassIgnoreHeta();
+        boolean[][] contactMatrix = new boolean[distanceMatrix.length][distanceMatrix.length];
+        for (int i=0; i<distanceMatrix.length; i++) {
+            for (int j = 0; j < distanceMatrix.length; j++) {
+                contactMatrix[i][j] = distanceMatrix[i][j] <= this.threshold;
+            }
+        }
+        return contactMatrix;
+    }
+
     public boolean[][] getContactMatrixCenterOfMass(){
         double[][] distanceMatrix = getDistanceMatrixCenterOfMass();
         boolean[][] contactMatrix = new boolean[distanceMatrix.length][distanceMatrix.length];
