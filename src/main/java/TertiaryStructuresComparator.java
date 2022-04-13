@@ -1,16 +1,16 @@
 import org.biojava.nbio.structure.*;
-import org.biojava.nbio.structure.io.PDBFileReader;
 
 public class TertiaryStructuresComparator {
 
     public static void main(String[] args) {
-        PDBFileReader pdbReader = new PDBFileReader();
-        pdbReader.setPath("../../main/resources");
-        String filename = "3mge";
         try{
-            Structure structure = pdbReader.getStructureById(filename);
+            Structure structure = StructureIO.getStructure("7jxh");
             TertiaryStructure tertiaryStructure = new TertiaryStructure(structure);
             System.out.println(tertiaryStructure.getType());
+            System.out.println(tertiaryStructure.getBondList());
+            System.out.println(tertiaryStructure.getSecondaryStructure());
+            System.out.println(tertiaryStructure.getThreshold());
+            System.out.println(tertiaryStructure.getSequence());
         } catch (Exception e){
             e.printStackTrace();
         }

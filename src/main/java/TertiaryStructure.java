@@ -3,7 +3,6 @@ import org.biojava.nbio.structure.Chain;
 import org.biojava.nbio.structure.GroupType;
 import org.biojava.nbio.structure.Structure;
 import org.biojava.nbio.structure.secstruc.SecStrucCalc;
-import org.biojava.nbio.structure.secstruc.SecStrucTools;
 import org.jgrapht.alg.util.Pair;
 
 import java.util.ArrayList;
@@ -179,7 +178,6 @@ public class TertiaryStructure {
         if(this.secondaryStructure == null)
             calculateSecondaryStructure();
         System.out.println(this.secondaryStructure.printDSSP());
-        SecStrucTools.getSecStrucInfo(structure);
         return this.secondaryStructure;
     }
 
@@ -204,6 +202,13 @@ public class TertiaryStructure {
 
     public Structure getStructure() {
         return structure;
+    }
+
+    public String getSequence(){
+        StringBuilder builder = new StringBuilder();
+        for(Chain currentChain: this.structure.getChains())
+            builder.append(currentChain.getSeqResSequence());
+        return builder.toString();
     }
 
     public void setDistanceMatrixCalculationMethod(String calculationMethod){
