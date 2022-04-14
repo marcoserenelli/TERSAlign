@@ -5,7 +5,10 @@ import org.biojava.nbio.structure.Structure;
 import org.biojava.nbio.structure.secstruc.SecStrucCalc;
 import org.jgrapht.alg.util.Pair;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 
 public class TertiaryStructure {
@@ -38,7 +41,7 @@ public class TertiaryStructure {
         return this.bondList;
     }
 
-    public void calculateBondList() {
+    private void calculateBondList() {
         boolean[][]contactMap = this.getContactMatrix();
         ArrayList<Pair<Integer, Integer>>bondList = new ArrayList<>();
         int colCount = 0;
@@ -81,11 +84,11 @@ public class TertiaryStructure {
      * @return distance matrix
      */
     public double[][] getDistanceMatrix(){
-        if(this.distanceMatrix == null) {
-            if(this.distanceMatrixCalculationMethod.equals("default"))
-                this.calculateDistanceMatrixDefault();
-            else if (this.distanceMatrixCalculationMethod.equals("centerofmass"))
-                this.calculateDistanceMatrixCenterOfMass();
+        if(this.distanceMatrixCalculationMethod.equals("default")){
+            this.calculateDistanceMatrixDefault();
+        }
+        else if (this.distanceMatrixCalculationMethod.equals("centerofmass")){
+            this.calculateDistanceMatrixCenterOfMass();
         }
         return this.distanceMatrix;
     }
@@ -215,5 +218,53 @@ public class TertiaryStructure {
         if(calculationMethod.toLowerCase(Locale.ROOT).equals("default") || calculationMethod.toLowerCase(Locale.ROOT).equals("centerofmass"))
             this.distanceMatrixCalculationMethod = calculationMethod.toLowerCase(Locale.ROOT);
     }
+
+    /**
+     * Prints the distance matrix to a csv file
+     */
+    public void printDistanceMatrixToCSV(){
+        try {
+            System.out.println(this.distanceMatrixCalculationMethod);
+            double[][] distanceMatrix = this.getDistanceMatrix();
+            FileWriter writer;
+            if(this.distanceMatrixCalculationMethod.equals("default"))
+                writer = new FileWriter("src/main/resources/DistanceMatrix.csv");
+            else
+                writer = new FileWriter("src/main/resources/DistanceMatrixCenterOfMass.csv");
+            for (int i = 0; i < distanceMatrix.length; i++) {
+                for (int j = 0; j < distanceMatrix.length; j++) {
+                    writer.append(String.valueOf(i)).append(" ").append(String.valueOf(j)).append(":").append(" ").append(String.valueOf(distanceMatrix[i][j])).append("  ");
+                }
+                writer.append("\n");
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Prints the contact matrix to a csv file
+     */
+    public void printContactMatrixToCSV(){
+        try {
+            boolean[][] contactMatrix = this.getContactMatrix();
+            FileWriter writer;
+            if(this.distanceMatrixCalculationMethod.equals("default"))
+                writer = new FileWriter("src/main/resources/ContactMatrix.csv");
+            else
+                writer = new FileWriter("src/main/resources/ContactMatrixCenterOfMass.csv");
+            for (int i = 0; i < contactMatrix.length; i++) {
+                for (int j = 0; j < contactMatrix.length; j++) {
+                    writer.append(String.valueOf(i)).append(" ").append(String.valueOf(j)).append(":").append(" ").append(String.valueOf(contactMatrix[i][j])).append("  ");
+                }
+                writer.append("\n");
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }
