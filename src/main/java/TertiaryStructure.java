@@ -2,13 +2,12 @@ import org.biojava.nbio.structure.*;
 import org.biojava.nbio.structure.Chain;
 import org.biojava.nbio.structure.GroupType;
 import org.biojava.nbio.structure.Structure;
+import org.biojava.nbio.structure.contact.Pair;
 import org.biojava.nbio.structure.secstruc.SecStrucCalc;
-import org.jgrapht.alg.util.Pair;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Locale;
 
 public class TertiaryStructure {
@@ -16,13 +15,15 @@ public class TertiaryStructure {
     private final Structure structure;
     private double threshold; //Value between 4.5 and 12 ångström
     private SecStrucCalc secondaryStructure;
-    private ArrayList<Pair<Integer, Integer>> bondList;
+    private ArrayList<Pair<Integer>> bondList;
     private boolean[][] contactMatrix;
     private double[][] distanceMatrix;
     private String distanceMatrixCalculationMethod;
+    private String sequence;
 
     public TertiaryStructure(Structure structure) {
         this.structure = structure;
+        this.sequence = null;
         this.threshold = 8;
         this.secondaryStructure = null;
         this.bondList = null;
@@ -35,7 +36,7 @@ public class TertiaryStructure {
      * Returns a list containing the indexes of bonded nucleotides/aminos, that is all nucleotides/aminos closer than the specified threshold.
      * @return bond list
      */
-    public ArrayList<Pair<Integer, Integer>> getBondList(){
+    public ArrayList<Pair<Integer>> getBondList(){
         if(this.bondList == null)
             calculateBondList();
         return this.bondList;
@@ -43,7 +44,7 @@ public class TertiaryStructure {
 
     private void calculateBondList() {
         boolean[][]contactMap = this.getContactMatrix();
-        ArrayList<Pair<Integer, Integer>>bondList = new ArrayList<>();
+        ArrayList<Pair<Integer>>bondList = new ArrayList<>();
         int colCount = 0;
         for(int i=0; i<contactMap.length; i++) {
             for (int j = colCount; j < contactMap.length; j++)
@@ -208,10 +209,16 @@ public class TertiaryStructure {
     }
 
     public String getSequence(){
+        if(this.sequence == null)
+            this.calculateSequence();
+        return this.sequence;
+    }
+
+    private void calculateSequence(){
         StringBuilder builder = new StringBuilder();
         for(Chain currentChain: this.structure.getChains())
             builder.append(currentChain.getSeqResSequence());
-        return builder.toString();
+        this.sequence = builder.toString();
     }
 
     public void setDistanceMatrixCalculationMethod(String calculationMethod){
@@ -224,17 +231,17 @@ public class TertiaryStructure {
      */
     public void printDistanceMatrixToCSV(){
         try {
-            System.out.println(this.distanceMatrixCalculationMethod);
             double[][] distanceMatrix = this.getDistanceMatrix();
             FileWriter writer;
             if(this.distanceMatrixCalculationMethod.equals("default"))
-                writer = new FileWriter("src/main/resources/DistanceMatrix.csv");
+                writer = new FileWriter("src/main/resources/DefaultDistanceMatrix.csv");
             else
                 writer = new FileWriter("src/main/resources/DistanceMatrixCenterOfMass.csv");
             for (int i = 0; i < distanceMatrix.length; i++) {
                 for (int j = 0; j < distanceMatrix.length; j++) {
-                    writer.append(String.valueOf(i)).append(" ").append(String.valueOf(j)).append(":").append(" ").append(String.valueOf(distanceMatrix[i][j])).append("  ");
+                    writer.append(String.valueOf(i)).append(" ").append(String.valueOf(j)).append(":").append(" ").append(String.valueOf(distanceMatrix[i][j])).append("   ");
                 }
+                writer.append("\n");
                 writer.append("\n");
             }
             writer.close();
@@ -250,10 +257,7 @@ public class TertiaryStructure {
         try {
             boolean[][] contactMatrix = this.getContactMatrix();
             FileWriter writer;
-            if(this.distanceMatrixCalculationMethod.equals("default"))
-                writer = new FileWriter("src/main/resources/ContactMatrix.csv");
-            else
-                writer = new FileWriter("src/main/resources/ContactMatrixCenterOfMass.csv");
+            writer = new FileWriter("src/main/resources/ContactMatrix.csv");
             for (int i = 0; i < contactMatrix.length; i++) {
                 for (int j = 0; j < contactMatrix.length; j++) {
                     writer.append(String.valueOf(i)).append(" ").append(String.valueOf(j)).append(":").append(" ").append(String.valueOf(contactMatrix[i][j])).append("  ");

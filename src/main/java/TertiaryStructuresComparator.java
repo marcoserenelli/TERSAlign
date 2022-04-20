@@ -8,9 +8,11 @@ public class TertiaryStructuresComparator {
             TertiaryStructure tertiaryStructure = new TertiaryStructure(structure);
             System.out.println(tertiaryStructure.getType());
             System.out.println(tertiaryStructure.getBondList());
+            System.out.println(tertiaryStructure.getBondList().get(1));
             System.out.println(tertiaryStructure.getSecondaryStructure());
             System.out.println(tertiaryStructure.getThreshold());
             System.out.println(tertiaryStructure.getSequence());
+            System.out.println(tertiaryStructure.getStructure());
             tertiaryStructure.setDistanceMatrixCalculationMethod("Default");
             tertiaryStructure.printDistanceMatrixToCSV();
             tertiaryStructure.setDistanceMatrixCalculationMethod("CenterOfMass");
