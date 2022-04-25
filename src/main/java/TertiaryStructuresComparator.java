@@ -13,6 +13,7 @@ public class TertiaryStructuresComparator {
             System.out.println(tertiaryStructure.getThreshold());
             System.out.println(tertiaryStructure.getSequence());
             System.out.println(tertiaryStructure.getStructure());
+            /*
             tertiaryStructure.setDistanceMatrixCalculationMethod("Default");
             tertiaryStructure.printDistanceMatrixToCSV();
             tertiaryStructure.setDistanceMatrixCalculationMethod("CenterOfMass");
@@ -20,7 +21,7 @@ public class TertiaryStructuresComparator {
             tertiaryStructure.setDistanceMatrixCalculationMethod("Default");
             tertiaryStructure.printContactMatrixToCSV();
             tertiaryStructure.setDistanceMatrixCalculationMethod("CenterOfMass");
-            tertiaryStructure.printContactMatrixToCSV();
+            tertiaryStructure.printContactMatrixToCSV(); */
         } catch (Exception e){
             e.printStackTrace();
         }

@@ -69,13 +69,14 @@ public class StructuralTree {
         Tree<String> t = new Tree<>();
 
         // start the recursive construction of the structural RNA Tree on the node ct
-        recBuildStructural(t, bonds, c, zi, l, r);
+        recBuildStructural(t, bonds, c, this.p, zi, l, r);
 
         // assign to the root of this tree
         this.structuralTree = t;
     }
 
-    private void recBuildStructural(Tree<String> ct, ArrayList<Pair<Integer>> bonds, int[] c, ArrayList<Interval> zi, int l, int r) {
+    private void recBuildStructural(Tree<String> ct, ArrayList<Pair<Integer>> bonds, int[] c, ArrayList<Integer>[] p ,ArrayList<Interval> zi, int l, int r){
+
         // checks
         assert c[l] == 1 && c[r] == 0 : "Pseudoloop bounds error while parsing at [" + l + "," + r
                 + "]\nCounting array: " + Arrays.toString(c);
@@ -84,194 +85,70 @@ public class StructuralTree {
                 + "determined loop in WeakBond: (" + l + "," + r + ") vs (" + lastBond.getSecond() + ","
                 + lastBond.getFirst() + ")";
 
-        // determine if the pseudoloop is a meeting
-        if(true) {
-            // meeting case
-        }
-
-        // determine if the pseudoloop is a starting
-        if(true) {
-            // starting case
-        }
-
-        // determine if the pseudoloop is a ending
-        if(true) {
-            // ending case
-        }
-
-        // determine if the pseudoloop is a diamond
-        if(true) {
-            // diamond case
-        }
-
-        // determine if the pseudoloop is a nesting
-        if (this.p[r].get(0) == l) {
-            // nesting case
-
-            ct.setValue(Operators.NESTING_LABEL);
-
-            // decrease counting array according to the elimination of this hairpin
-            for (int i = l; i < r; i++)
-                c[i]--;
-
-            // init indexes for later recursion call
-            int lp = l + 1;
-            int rp = r;
-
-            // determine the starting of the next loop on the left and increment k
-            while (c[lp] == 0 && lp < rp)
-                lp++;
-            if (lp == rp) {
-                // no subloops of this nesting, there will be no more complex subtrees
-                assert bonds.size() == 1 : "Mismatch in base case of building structural RNA "
-                        + "tree: size of list of bonds different from one";
-
-                // revert to just a single hairpin
-                ct.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getSecond() + "," + lastBond.getFirst() + ")");
-
-                // end recursion
-                return;
-            }
-
-            // determine the ending of the last loop on the right
-            while (c[rp] == 0)
-                rp--;
-            rp++; // last closing loop has 0 count, but belongs to the loop
-
-            // the new pseudoloop to consider has bounds [lp,rp]
-            assert c[lp] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + lp + "," + rp + "]\nCounting array: "
-                    + Arrays.toString(c);
-
-            // create the empty node for building the rest of the tree on the left
-            Tree<String> rest = new Tree<>();
-
-            // create hairpin subtree
-            Tree<String> h = new Tree<>();
-            h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getSecond() + "," + lastBond.getFirst() + ")");
-
-            // update tree
-            ArrayList<Tree<String>> nestChilds = new ArrayList<>();
-            nestChilds.add(rest);
-            nestChilds.add(h);
-            ct.replaceChildrenListBy(nestChilds);
-
-            // create an empty list of zero intervals to detect concatenations
-            ArrayList<Interval> zip = new ArrayList<>();
-
-            // find zero intervals in the new pseudoloop, if any
-            detectZeroIntervals(c, zip, lp, rp);
-
-            // remove last bound from the list of bounds
-            bonds.remove(bonds.size() - 1);
-
-            // recursive construction of the structural RNA subTree on the node rest
-            recBuildStructural(rest, bonds, c, zip, lp, rp);
-        } else {
-            // not nesting case
-            if (zi.isEmpty()) {
-
-                // determine if the pseudoloop is a meeting
-                if(true) {
-                    // meeting case
-                } else {
-                    // crossing case
-
-                    // determine number of crossings and set label
-                    int numberOfCrossings = determineNumberOfCrossings(bonds);
-                    ct.setValue("(" + Operators.CROSSING_LABEL + "," + numberOfCrossings + ")");
-
-                    // left end of the rightmost crossing hairpin
-                    int lpp = this.p[r].get(0);
-                    // index for the right end of the new pseudoloop
-                    int rp = r;
-
-                    // decrease counting array according to the elimination of this hairpin
-                    for (int i = lpp; i < r; i++)
-                        c[i]--;
-
-                    // determine the ending of the last loop on the right
-                    while (c[rp] == 0)
-                        rp--;
-                    rp++; // last closing loop has 0 count, but belongs to the loop
-
-                    // the new pseudoloop to consider has bounds [l,rp]
-                    assert c[l] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + l + "," + rp
-                            + "]\nCounting array: " + Arrays.toString(c);
-
-                    // create the empty node for building the rest of the tree on the left
-                    Tree<String> rest = new Tree<>();
-
-                    // create hairpin subtree
-                    Tree<String> h = new Tree<>();
-                    h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getSecond() + "," + lastBond.getFirst() + ")");
-
-                    // update tree
-                    ArrayList<Tree<String>> crossChilds = new ArrayList<>();
-                    crossChilds.add(rest);
-                    crossChilds.add(h);
-                    ct.replaceChildrenListBy(crossChilds);
-
-                    // create an empty list of zero intervals to detect concatenations
-                    ArrayList<Interval> zip = new ArrayList<>();
-
-                    // find zero intervals in the new pseudoloop, if any
-                    detectZeroIntervals(c, zip, l, rp);
-
-                    // remove last bound from the list of bounds
-                    bonds.remove(bonds.size() - 1);
-
-                    // recursive construction of the structural RNA subTree on the node rest
-                    recBuildStructural(rest, bonds, c, zip, l, rp);
+        //If there are no zero intervals, the hairpin can't be a concat
+        if(zi.isEmpty()){
+            if(!detectMeet(l,r)){
+                //If the C array has a value greater than 1, in the arriving point of the hairpin it means that the hairpin is a cross
+                if(c[p[r].get(0)] > 1 ){
+                    //cross case
+                    ct.setValue(Operators.CROSSING_LABEL);
                 }
-            } else {
-                // concatenation
-                ct.setValue(Operators.CONCATENATION_LABEL);
+                //If the P size in the r position, is more than one then it can be an ending or a diamond
+                if(p[r].size() > 1){
+                    Pair<Integer> longestBond = new Pair<Integer>(Integer.MAX_VALUE,Integer.MAX_VALUE);
+                    for(int currentBond : p[r]){
+                        if(p[currentBond].size() > 1){
+                            longestBond = currentBond - r < longestBond.getFirst() ? new Pair<Integer>(p[currentBond].get(0),r) : longestBond;
 
-                // get the rightmost zero interval
-                Interval rmzi = zi.get(zi.size() - 1);
-                zi.remove(zi.size() - 1);
-
-                // find boundaries of the right pseudoloop and of the left pseudoloop
-                int ll = l;
-                int lr = rmzi.i - 1;
-                int rl = rmzi.j;
-                int rr = r;
-
-                // the new right pseudoloop to consider has bounds [rl,rr]
-                assert c[rl] == 1 && c[rr] == 0 : "Determined wrong pseudoloop at [" + rl + "," + rr
-                        + "]\nCounting array: " + Arrays.toString(c);
-
-                // create the node for building the left part
-                Tree<String> left = new Tree<>();
-
-                // create node for building the right part
-                Tree<String> right = new Tree<>();
-
-                // update tree
-                ArrayList<Tree<String>> concChilds = new ArrayList<>();
-                concChilds.add(left);
-                concChilds.add(right);
-                ct.replaceChildrenListBy(concChilds);
-
-                // create an empty list of zero intervals to detect concatenations in the right
-                // pseudoloop
-                ArrayList<Interval> zir = new ArrayList<>();
-
-                // find zero intervals in the right pseudoloop, if any
-                detectZeroIntervals(c, zir, rl, rr);
-
-                ArrayList<Pair<Integer>> lbonds = new ArrayList<>();
-                ArrayList<Pair<Integer>> rbonds = new ArrayList<>();
-
-                splitBonds(bonds, ll, lr, rl, rr, lbonds, rbonds);
-
-                // recursive construction of the structural RNA subTree on the right
-                recBuildStructural(right, rbonds, c, zir, rl, rr);
-
-                // recursive construction of the structural RNA subTree on the left
-                recBuildStructural(left, lbonds, c, zi, ll, lr);
+                            if(longestBond.getFirst() >= l){
+                                //ending case
+                                ct.setValue(Operators.ENDING_LABEL);
+                            }
+                        } else {
+                            //diamond case
+                            ct.setValue(Operators.DIAMOND_LABEL);
+                        }
+                    }
+                } else {
+                    //If the P size in the arriving point of the hairpin is greater than 1, then the hairpin it's a starting
+                    if(p[p[r].get(0)].size() > 1){
+                        //starting case
+                        ct.setValue(Operators.STARTING_LABEL);
+                    } else {
+                        //If the P in the arriving point of the hairpin is equals to l, it means that the hairpin is a nest
+                        if(p[r].get(0) == l){
+                            //nest case
+                            ct.setValue(Operators.NESTING_LABEL);
+                        }
+                    }
+                }
+            }
+            //If meets are detected than it's a meet
+            else {
+                //meet case
+                ct.setValue(Operators.MEETING_LABEL);
             }
         }
+        //If there are zero intervals, the hairpin is a concat
+        else {
+            //concat case
+            ct.setValue(Operators.CONCATENATION_LABEL);
+        }
+    }
+
+    /**
+     * Returns true if a meet is find in the array between l and r indexes
+     * @param l left index
+     * @param r right index
+     * @return true if a meet is founded, false otherwise
+     */
+    private boolean detectMeet(int l, int r ){
+        for(int i = l; i <= r; i++){
+            if(this.m[i] == 1){
+                return true;
+            }
+        }
+        return false;
     }
 
     private void splitBonds(ArrayList<Pair<Integer>> bonds, int ll, int lr, int rl, int rr, ArrayList<Pair<Integer>> lbonds,
@@ -477,3 +354,4 @@ public class StructuralTree {
 
 
 }
+

@@ -18,6 +18,7 @@ class TertiaryStructureTest {
         tertiaryStructure.setDistanceMatrixCalculationMethod("Default");
         double[][] resultMatrix = tertiaryStructure.getDistanceMatrix();
 
+
         //Check matrix length
         assertEquals(204, resultMatrix.length, "Matrix length should be 204");
 
