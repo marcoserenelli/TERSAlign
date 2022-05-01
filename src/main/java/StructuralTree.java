@@ -81,43 +81,165 @@ public class StructuralTree {
         this.structuralTree = t;
     }
 
-    private void recBuildStructural(Tree<String> ct, ArrayList<Pair<Integer>> bonds, ArrayList<Integer> meetsInInterval, ArrayList<Interval> zi, int l, int r){
+    private void recBuildStructural(Tree<String> ct, ArrayList<Pair<Integer>> bonds, ArrayList<Integer> meetsInInterval, ArrayList<Interval> zi, int l, int r) {
 
-        // checks
-        assert c[l] == 1 && c[r] == 0 : "Pseudoloop bounds error while parsing at [" + l + "," + r
-                + "]\nCounting array: " + Arrays.toString(c);
-        Pair<Integer> lastBond = bonds.get(bonds.size() - 1);
-        assert lastBond.getFirst() == r : "Mismatch among indexes of secondary structure and of "
-                + "determined loop in WeakBond: (" + l + "," + r + ") vs (" + lastBond.getSecond() + ","
-                + lastBond.getFirst() + ")";
+        if(zi.isEmpty() && meetsInInterval.isEmpty()){
+            // checks
+            assert c[l] == 1 && c[r] == 0 : "Pseudoloop bounds error while parsing at [" + l + "," + r
+                    + "]\nCounting array: " + Arrays.toString(c);
+            Pair<Integer> lastBond = bonds.get(bonds.size() - 1);
+            assert lastBond.getFirst() == r : "Mismatch among indexes of secondary structure and of "
+                    + "determined loop in WeakBond: (" + l + "," + r + ") vs (" + lastBond.getSecond() + ","
+                    + lastBond.getFirst() + ")";
 
-        //If there are no zero intervals, the hairpin can't be a concat
-        if(zi.isEmpty()){
-            if(meetsInInterval.isEmpty()){
-                //If the C array has a value greater than 1, in the arriving point of the hairpin it means that the hairpin is a cross
-                if(c[p[r].get(0)] > 1 ){
-                    //cross case
-                    // determine number of crossings and set label
-                    int numberOfCrossings = determineNumberOfCrossings(bonds);
-                    ct.setValue("(" + Operators.CROSSING_LABEL + "," + numberOfCrossings + ")");
+            if(p[r].get(0) > l){
+                //cross case
+                // determine number of crossings and set label
+                int numberOfCrossings = determineNumberOfCrossings(bonds);
+                ct.setValue("(" + Operators.CROSSING_LABEL + "," + numberOfCrossings + ")");
 
-                    // left end of the rightmost crossing hairpin
-                    int lpp = this.p[r].get(0);
-                    // index for the right end of the new pseudoloop
-                    int rp = r;
+                // left end of the rightmost crossing hairpin
+                int lpp = this.p[r].get(0);
+                // index for the right end of the new pseudoloop
+                int rp = r;
 
-                    // decrease counting array according to the elimination of this hairpin
-                    for (int i = lpp; i < r; i++)
-                        c[i]--;
-
+                // decrease counting array according to the elimination of this hairpin
+                for (int i = lpp; i < r; i++)
+                    c[i]--;
+                // go ahead to the next index if no other hairpins are present in the r index
+                if(!(p[r].size() > 1)){
                     // determine the ending of the last loop on the right
                     while (c[rp] == 0)
                         rp--;
                     rp++; // last closing loop has 0 count, but belongs to the loop
+                }
+                // the new pseudoloop to consider has bounds [l,rp]
+                assert c[l] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + l + "," + rp
+                        + "]\nCounting array: " + Arrays.toString(c);
 
-                    // the new pseudoloop to consider has bounds [l,rp]
-                    assert c[l] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + l + "," + rp
-                            + "]\nCounting array: " + Arrays.toString(c);
+                // create the empty node for building the rest of the tree on the left
+                Tree<String> rest = new Tree<>();
+
+                // create hairpin subtree
+                Tree<String> h = new Tree<>();
+                h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
+
+                // update tree
+                ArrayList<Tree<String>> crossChilds = new ArrayList<>();
+                crossChilds.add(rest);
+                crossChilds.add(h);
+                ct.replaceChildrenListBy(crossChilds);
+
+                // create an empty list of zero intervals to detect concatenations
+                ArrayList<Interval> zip = new ArrayList<>();
+
+                // find zero intervals in the new pseudoloop, if any
+                detectZeroIntervals(c, zip, l, rp);
+
+                // create an empty list of meets indexes to detect meetings
+                ArrayList<Integer> meetIndexesList = new ArrayList<>();
+
+                //find meets in the new pseudoloop, if any
+                getMeetsInInterval(meetIndexesList, l, r);
+
+                // remove last bound from the list of bounds
+                bonds.remove(bonds.size() - 1);
+
+                //remove partner indexes from both hairpin ending's p arrays
+                p[r].remove(p[r].get(0));
+                p[p[r].get(0)].remove(r);
+
+                // recursive construction of the algebraic RNA subTree on the node rest
+                recBuildStructural(rest, bonds, meetIndexesList, zip, l, rp);
+
+            } else {
+                if(p[r].size() > 1 && p[p[r].get(0)].size() == 1 && p[r].get(0) == l){
+                    //ending case
+                    ct.setValue(Operators.ENDING_LABEL);
+                    // decrease counting array according to the elimination of this hairpin
+                    for (int i = l; i < r; i++)
+                        c[i]--;
+
+                    // init indexes for later recursion call
+                    int lp = l + 1;
+
+                    // determine the starting of the next loop on the left
+                    while (c[lp] == 0 && lp < r)
+                        lp++;
+                    if (lp == r) {
+                        // no subloops of this ending, there will be no more complex subtrees
+                        assert bonds.size() == 1 : "Mismatch in base case of building structural RNA "
+                                + "tree: size of list of bonds different from one";
+
+                        // revert to just a single hairpin
+                        ct.setValue(Operators.HAIRPIN_LABEL + "(" + r + "," + p[r].get(0) + ")");
+
+                        // end recursion
+                        return;
+                    }
+
+                    // the new pseudoloop to consider has bounds [lp,rp]
+                    assert c[lp] == 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + lp + "," + r + "]\nCounting array: "
+                            + Arrays.toString(c);
+
+                    // create the empty node for building the rest of the tree on the left
+                    Tree<String> rest = new Tree<>();
+
+                    // create hairpin subtree
+                    Tree<String> h = new Tree<>();
+                    h.setValue(Operators.HAIRPIN_LABEL + "(" + r + "," + p[r].get(0) + ")");
+
+                    // update tree
+                    ArrayList<Tree<String>> endChild = new ArrayList<>();
+                    endChild.add(rest);
+                    endChild.add(h);
+                    ct.replaceChildrenListBy(endChild);
+
+                    // create an empty list of zero intervals to detect concatenations
+                    ArrayList<Interval> zip = new ArrayList<>();
+
+                    // find zero intervals in the new pseudoloop, if any
+                    detectZeroIntervals(c, zip, lp, r);
+
+                    // create an empty list of meets indexes to detect meetings
+                    ArrayList<Integer> meetIndexesList = new ArrayList<>();
+
+                    //find meets in the new pseudoloop, if any
+                    getMeetsInInterval(meetIndexesList, lp, r);
+
+                    // remove last bound from the list of bounds
+                    bonds.remove(bonds.size() - 1);
+
+                    //remove partner indexes from both hairpin ending's p arrays
+                    p[r].remove(p[r].get(0));
+                    p[p[r].get(0)].remove(r);
+
+                    // recursive construction of the algebraic RNA subTree on the node rest
+                    recBuildStructural(rest, bonds, meetIndexesList, zip, lp, r);
+
+                } else if(p[r].size() == 1 && p[p[r].get(0)].size() > 1 && p[r].get(0) == l){
+                    //starting case
+                    ct.setValue(Operators.STARTING_LABEL);
+
+                    // decrease counting array according to the elimination of this hairpin
+                    for (int i = l; i < r; i++)
+                        c[i]--;
+
+                    int rp = r;
+                    
+                    // go ahead to the next index if no other hairpins are present in the r index
+                    if(!(p[r].size() > 1)){
+                        // init indexes for later recursion call
+                        rp = r - 1;
+
+                        // determine the ending of the last loop on the right
+                        while (c[rp] == 0)
+                            rp--;
+                        rp++; // last closing loop has 0 count, but belongs to the loop
+                    }
+                    // the new pseudoloop to consider has bounds [lp,rp]
+                    assert c[l] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + l + "," + rp + "]\nCounting array: "
+                            + Arrays.toString(c);
 
                     // create the empty node for building the rest of the tree on the left
                     Tree<String> rest = new Tree<>();
@@ -127,10 +249,10 @@ public class StructuralTree {
                     h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
 
                     // update tree
-                    ArrayList<Tree<String>> crossChilds = new ArrayList<>();
-                    crossChilds.add(rest);
-                    crossChilds.add(h);
-                    ct.replaceChildrenListBy(crossChilds);
+                    ArrayList<Tree<String>> startChids = new ArrayList<>();
+                    startChids.add(rest);
+                    startChids.add(h);
+                    ct.replaceChildrenListBy(startChids);
 
                     // create an empty list of zero intervals to detect concatenations
                     ArrayList<Interval> zip = new ArrayList<>();
@@ -142,319 +264,168 @@ public class StructuralTree {
                     ArrayList<Integer> meetIndexesList = new ArrayList<>();
 
                     //find meets in the new pseudoloop, if any
-                    getMeetsInInterval(meetIndexesList,l,r);
+                    getMeetsInInterval(meetIndexesList, l, rp);
 
                     // remove last bound from the list of bounds
                     bonds.remove(bonds.size() - 1);
 
-                    // recursive construction of the algebraic RNA subTree on the node rest
+                    //remove partner indexes from both hairpin ending's p arrays
+                    p[r].remove(p[r].get(0));
+                    p[p[r].get(0)].remove(r);
+
+                    // recursive construction of the structural RNA subTree on the node rest
                     recBuildStructural(rest, bonds, meetIndexesList, zip, l, rp);
 
-                }
-                //If the P size in the r position, is more than one then it can be an ending or a diamond
-                 else if(p[r].size() > 1){
-                    Pair<Integer> longestBond = new Pair<>(Integer.MAX_VALUE, Integer.MAX_VALUE);
-                    for(int currentBond : p[r]){
-                        if(p[currentBond].size() > 1){
-                            longestBond = currentBond - r < longestBond.getFirst() ? new Pair<>(p[currentBond].get(0), r) : longestBond;
+                } else if(p[r].size() > 1 && p[p[r].get(0)].size() > 1 && p[r].get(0) == l){
+                    //diamond case
+                    ct.setValue(Operators.DIAMOND_LABEL);
 
-                            if(longestBond.getFirst() >= l){
-                                //ending case
-                                ct.setValue(Operators.ENDING_LABEL);
-                                // decrease counting array according to the elimination of this hairpin
-                                for (int i = l; i < r; i++)
-                                    c[i]--;
+                    // decrease counting array according to the elimination of this hairpin
+                    for (int i = l; i < r; i++)
+                        c[i]--;
 
-                                // init indexes for later recursion call
-                                int lp = l + 1;
+                    // indexes for later recursion call are l and r
 
-                                // determine the starting of the next loop on the left
-                                while (c[lp] == 0 && lp < r)
-                                    lp++;
-                                if (lp == r) {
-                                    // no subloops of this ending, there will be no more complex subtrees
-                                    assert bonds.size() == 1 : "Mismatch in base case of building structural RNA "
-                                            + "tree: size of list of bonds different from one";
+                    // Starting and ending of the loop are l and r
 
-                                    // revert to just a single hairpin
-                                    ct.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
+                    // the new pseudoloop to consider has bounds [lp,rp]
+                    assert c[l] == 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + l + "," + r + "]\nCounting array: "
+                            + Arrays.toString(c);
 
-                                    // end recursion
-                                    return;
-                                }
+                    // create the empty node for building the rest of the tree on the left
+                    Tree<String> rest = new Tree<>();
 
-                                // the new pseudoloop to consider has bounds [lp,rp]
-                                assert c[lp] == 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + lp + "," + r + "]\nCounting array: "
-                                        + Arrays.toString(c);
+                    // create hairpin subtree
+                    Tree<String> h = new Tree<>();
+                    h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
 
-                                // create the empty node for building the rest of the tree on the left
-                                Tree<String> rest = new Tree<>();
+                    // update tree
+                    ArrayList<Tree<String>> diamondChilds = new ArrayList<>();
+                    diamondChilds.add(rest);
+                    diamondChilds.add(h);
+                    ct.replaceChildrenListBy(diamondChilds);
 
-                                // create hairpin subtree
-                                Tree<String> h = new Tree<>();
-                                h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
+                    // create an empty list of zero intervals to detect concatenations
+                    ArrayList<Interval> zip = new ArrayList<>();
 
-                                // update tree
-                                ArrayList<Tree<String>> endChild = new ArrayList<>();
-                                endChild.add(rest);
-                                endChild.add(h);
-                                ct.replaceChildrenListBy(endChild);
+                    // find zero intervals in the new pseudoloop, if any
+                    detectZeroIntervals(c, zip, l, r);
 
-                                // create an empty list of zero intervals to detect concatenations
-                                ArrayList<Interval> zip = new ArrayList<>();
+                    // create an empty list of meets indexes to detect meetings
+                    ArrayList<Integer> meetIndexesList = new ArrayList<>();
 
-                                // find zero intervals in the new pseudoloop, if any
-                                detectZeroIntervals(c, zip, lp, r);
+                    //find meets in the new pseudoloop, if any
+                    getMeetsInInterval(meetIndexesList, l, r);
 
-                                // create an empty list of meets indexes to detect meetings
-                                ArrayList<Integer> meetIndexesList = new ArrayList<>();
+                    // remove last bound from the list of bounds
+                    bonds.remove(bonds.size() - 1);
 
-                                //find meets in the new pseudoloop, if any
-                                getMeetsInInterval(meetIndexesList,lp,r);
+                    //remove partner indexes from both hairpin ending's p arrays
+                    p[r].remove(p[r].get(0));
+                    p[p[r].get(0)].remove(r);
 
-                                // remove last bound from the list of bounds
-                                bonds.remove(bonds.size() - 1);
+                    // recursive construction of the structural RNA subTree on the node rest
+                    recBuildStructural(rest, bonds, meetIndexesList, zip, l, r);
 
-                                // recursive construction of the algebraic RNA subTree on the node rest
-                                recBuildStructural(rest, bonds, meetIndexesList, zip, lp, r);
-                            }
-                        } else {
-                            //diamond case
-                            ct.setValue(Operators.DIAMOND_LABEL);
-
-                            // decrease counting array according to the elimination of this hairpin
-                            for (int i = l; i < r; i++)
-                                c[i]--;
-
-                            // indexes for later recursion call are l and r
-
-                            // Starting and ending of the loop are l and r
-
-                            // the new pseudoloop to consider has bounds [lp,rp]
-                            assert c[l] == 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + l + "," + r + "]\nCounting array: "
-                                    + Arrays.toString(c);
-
-                            // create the empty node for building the rest of the tree on the left
-                            Tree<String> rest = new Tree<>();
-
-                            // create hairpin subtree
-                            Tree<String> h = new Tree<>();
-                            h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
-
-                            // update tree
-                            ArrayList<Tree<String>> diamondChilds = new ArrayList<>();
-                            diamondChilds.add(rest);
-                            diamondChilds.add(h);
-                            ct.replaceChildrenListBy(diamondChilds);
-
-                            // create an empty list of zero intervals to detect concatenations
-                            ArrayList<Interval> zip = new ArrayList<>();
-
-                            // find zero intervals in the new pseudoloop, if any
-                            detectZeroIntervals(c, zip, l, r);
-
-                            // create an empty list of meets indexes to detect meetings
-                            ArrayList<Integer> meetIndexesList = new ArrayList<>();
-
-                            //find meets in the new pseudoloop, if any
-                            getMeetsInInterval(meetIndexesList,l,r);
-
-                            // remove last bound from the list of bounds
-                            bonds.remove(bonds.size() - 1);
-
-                            // recursive construction of the structural RNA subTree on the node rest
-                            recBuildStructural(rest, bonds, meetIndexesList, zip, l, r);
-                        }
-                    }
                 } else {
-                    //If the P size in the arriving point of the hairpin is greater than 1, then the hairpin it's a starting
-                    if(p[p[r].get(0)].size() > 1){
-                        //starting case
-                        ct.setValue(Operators.STARTING_LABEL);
+                    //nest case
+                    ct.setValue(Operators.NESTING_LABEL);
 
-                        // decrease counting array according to the elimination of this hairpin
-                        for (int i = l; i < r; i++)
-                            c[i]--;
+                    // decrease counting array according to the elimination of this hairpin
+                    for (int i = l; i < r; i++)
+                        c[i]--;
 
-                        // init indexes for later recursion call
-                        int rp = r - 1;
+                    // init indexes for later recursion call
+                    int lp = l + 1;
+                    int rp = r;
 
+                    // determine the starting of the next loop on the left and increment k
+                    while (c[lp] == 0 && lp < rp)
+                        lp++;
+                    if (lp == rp) {
+                        // no subloops of this nesting, there will be no more complex subtrees
+                        assert bonds.size() == 1 : "Mismatch in base case of building structural RNA "
+                                + "tree: size of list of bonds different from one";
+
+                        // revert to just a single hairpin
+                        ct.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
+
+                        // end recursion
+                        return;
+                    }
+
+                    // go ahead to the next index if no other hairpins are present in the r index
+                    if(!(p[r].size() > 1)){
                         // determine the ending of the last loop on the right
                         while (c[rp] == 0)
                             rp--;
                         rp++; // last closing loop has 0 count, but belongs to the loop
-
-                        // the new pseudoloop to consider has bounds [lp,rp]
-                        assert c[l] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + l + "," + rp + "]\nCounting array: "
-                                + Arrays.toString(c);
-
-                        // create the empty node for building the rest of the tree on the left
-                        Tree<String> rest = new Tree<>();
-
-                        // create hairpin subtree
-                        Tree<String> h = new Tree<>();
-                        h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
-
-                        // update tree
-                        ArrayList<Tree<String>> startChids = new ArrayList<>();
-                        startChids.add(rest);
-                        startChids.add(h);
-                        ct.replaceChildrenListBy(startChids);
-
-                        // create an empty list of zero intervals to detect concatenations
-                        ArrayList<Interval> zip = new ArrayList<>();
-
-                        // find zero intervals in the new pseudoloop, if any
-                        detectZeroIntervals(c, zip, l, rp);
-
-                        // create an empty list of meets indexes to detect meetings
-                        ArrayList<Integer> meetIndexesList = new ArrayList<>();
-
-                        //find meets in the new pseudoloop, if any
-                        getMeetsInInterval(meetIndexesList,l,rp);
-
-                        // remove last bound from the list of bounds
-                        bonds.remove(bonds.size() - 1);
-
-                        // recursive construction of the structural RNA subTree on the node rest
-                        recBuildStructural(rest, bonds, meetIndexesList, zip, l, rp);
-
-                    } else {
-                        //If the P in the arriving point of the hairpin is equals to l, it means that the hairpin is a nest
-                        if(p[r].get(0) == l){
-                            //nest case
-                            ct.setValue(Operators.NESTING_LABEL);
-
-                            // decrease counting array according to the elimination of this hairpin
-                            for (int i = l; i < r; i++)
-                                c[i]--;
-
-                            // init indexes for later recursion call
-                            int lp = l + 1;
-                            int rp = r;
-
-                            // determine the starting of the next loop on the left and increment k
-                            while (c[lp] == 0 && lp < rp)
-                                lp++;
-                            if (lp == rp) {
-                                // no subloops of this nesting, there will be no more complex subtrees
-                                assert bonds.size() == 1 : "Mismatch in base case of building structural RNA "
-                                        + "tree: size of list of bonds different from one";
-
-                                // revert to just a single hairpin
-                                ct.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
-
-                                // end recursion
-                                return;
-                            }
-
-                            // determine the ending of the last loop on the right
-                            while (c[rp] == 0)
-                                rp--;
-                            rp++; // last closing loop has 0 count, but belongs to the loop
-
-                            // the new pseudoloop to consider has bounds [lp,rp]
-                            assert c[lp] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + lp + "," + rp + "]\nCounting array: "
-                                    + Arrays.toString(c);
-
-                            // create the empty node for building the rest of the tree on the left
-                            Tree<String> rest = new Tree<>();
-
-                            // create hairpin subtree
-                            Tree<String> h = new Tree<>();
-                            h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
-
-                            // update tree
-                            ArrayList<Tree<String>> nestChilds = new ArrayList<>();
-                            nestChilds.add(rest);
-                            nestChilds.add(h);
-                            ct.replaceChildrenListBy(nestChilds);
-
-                            // create an empty list of zero intervals to detect concatenations
-                            ArrayList<Interval> zip = new ArrayList<>();
-
-                            // find zero intervals in the new pseudoloop, if any
-                            detectZeroIntervals(c, zip, lp, rp);
-
-                            // create an empty list of meets indexes to detect meetings
-                            ArrayList<Integer> meetIndexesList = new ArrayList<>();
-
-                            //find meets in the new pseudoloop, if any
-                            getMeetsInInterval(meetIndexesList,lp,rp);
-
-                            // remove last bound from the list of bounds
-                            bonds.remove(bonds.size() - 1);
-
-                            // recursive construction of the structural RNA subTree on the node rest
-                            recBuildStructural(rest, bonds, meetIndexesList, zip, lp, rp);
-                        }
                     }
+
+                    // the new pseudoloop to consider has bounds [lp,rp]
+                    assert c[lp] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + lp + "," + rp + "]\nCounting array: "
+                            + Arrays.toString(c);
+
+                    // create the empty node for building the rest of the tree on the left
+                    Tree<String> rest = new Tree<>();
+
+                    // create hairpin subtree
+                    Tree<String> h = new Tree<>();
+                    h.setValue(Operators.HAIRPIN_LABEL + "(" + lastBond.getFirst() + "," + lastBond.getSecond() + ")");
+
+                    // update tree
+                    ArrayList<Tree<String>> nestChilds = new ArrayList<>();
+                    nestChilds.add(rest);
+                    nestChilds.add(h);
+                    ct.replaceChildrenListBy(nestChilds);
+
+                    // create an empty list of zero intervals to detect concatenations
+                    ArrayList<Interval> zip = new ArrayList<>();
+
+                    // find zero intervals in the new pseudoloop, if any
+                    detectZeroIntervals(c, zip, lp, rp);
+
+                    // create an empty list of meets indexes to detect meetings
+                    ArrayList<Integer> meetIndexesList = new ArrayList<>();
+
+                    //find meets in the new pseudoloop, if any
+                    getMeetsInInterval(meetIndexesList, lp, rp);
+
+                    // remove last bound from the list of bounds
+                    bonds.remove(bonds.size() - 1);
+
+                    //remove partner indexes from both hairpin ending's p arrays
+                    p[r].remove(p[r].get(0));
+                    p[p[r].get(0)].remove(r);
+
+                    // recursive construction of the structural RNA subTree on the node rest
+                    recBuildStructural(rest, bonds, meetIndexesList, zip, lp, rp);
                 }
             }
-            //If meets are detected than it's a meet
-            else {
+        } else {
+            int rl;
+            int lr;
+            if (meetsInInterval.get(meetsInInterval.size() - 1) > zi.get(zi.size() - 1).j || zi.isEmpty()) {
                 //meet case
                 ct.setValue(Operators.MEETING_LABEL);
 
                 //find boundaries of the right pseudoloop and of the left pseudoloop
-                int lr = meetsInInterval.get(meetsInInterval.size() - 1) - 1;
-                int rl = meetsInInterval.get(meetsInInterval.size() - 1);
-
+                lr = meetsInInterval.get(meetsInInterval.size() - 1) - 1;
+                rl = meetsInInterval.get(meetsInInterval.size() - 1);
                 meetsInInterval.remove(meetsInInterval.size() - 1);
-
-                // the new right pseudoloop to consider has bounds [rl,rr]
-                assert c[rl] == 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + rl + "," + r
-                        + "]\nCounting array: " + Arrays.toString(c);
-
-                // create the node for building the left part
-                Tree<String> left = new Tree<>();
-
-                // create node for building the right part
-                Tree<String> right = new Tree<>();
-
-                // update tree
-                ArrayList<Tree<String>> meetChilds = new ArrayList<>();
-                meetChilds.add(left);
-                meetChilds.add(right);
-                ct.replaceChildrenListBy(meetChilds);
-
-                // create an empty list of zero intervals to detect concatenations in the right
-                // pseudoloop
-                ArrayList<Interval> zir = new ArrayList<>();
-
-                // find zero intervals in the right pseudoloop, if any
-                detectZeroIntervals(c, zir, rl, r);
-
-                // create an empty list of meets indexes to detect meetings
-                ArrayList<Integer> meetIndexesList = new ArrayList<>();
-
-                //find meets in the new pseudoloop, if any
-                getMeetsInInterval(meetIndexesList,rl,r);
-
-                ArrayList<Pair<Integer>> lbonds = new ArrayList<>();
-                ArrayList<Pair<Integer>> rbonds = new ArrayList<>();
-
-                splitBonds(bonds, l, lr, rl, r, lbonds, rbonds);
-
-                // recursive construction of the algebraic RNA subTree on the right
-                recBuildStructural(right, rbonds, meetIndexesList, zir, rl, r);
-                // recursive construction of the algebraic RNA subTree on the left
-                recBuildStructural(left, lbonds, meetIndexesList, zi, l, lr);
             }
-        }
-        //If there are zero intervals, the hairpin is a concat
-        else {
-            //concat case
-            ct.setValue(Operators.CONCATENATION_LABEL);
+            else {
+                //concat case
+                ct.setValue(Operators.CONCATENATION_LABEL);
 
-            // get rightmost zero interval
-            Interval rmzi = zi.get(zi.size() - 1);
-            zi.remove(zi.size() - 1);
+                // get rightmost zero interval
+                Interval rmzi = zi.get(zi.size() - 1);
+                zi.remove(zi.size() - 1);
 
-            // find boundaries of the right pseudoloop and of the left pseudoloop
-                int lr = rmzi.i - 1;
-                int rl = rmzi.j;
-
+                // find boundaries of the right pseudoloop and of the left pseudoloop
+                lr = rmzi.i - 1;
+                rl = rmzi.j;
+            }
             // the new right pseudoloop to consider has bounds [rl,rr]
             assert c[rl] == 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + rl + "," + r
                     + "]\nCounting array: " + Arrays.toString(c);
@@ -466,10 +437,10 @@ public class StructuralTree {
             Tree<String> right = new Tree<>();
 
             // update tree
-            ArrayList<Tree<String>> concChilds = new ArrayList<>();
-            concChilds.add(left);
-            concChilds.add(right);
-            ct.replaceChildrenListBy(concChilds);
+            ArrayList<Tree<String>> meetConcChilds = new ArrayList<>();
+            meetConcChilds.add(left);
+            meetConcChilds.add(right);
+            ct.replaceChildrenListBy(meetConcChilds);
 
             // create an empty list of zero intervals to detect concatenations in the right
             // pseudoloop
@@ -482,17 +453,20 @@ public class StructuralTree {
             ArrayList<Integer> meetIndexesList = new ArrayList<>();
 
             //find meets in the new pseudoloop, if any
-            getMeetsInInterval(meetIndexesList,rl,r);
-
+            getMeetsInInterval(meetIndexesList, rl, r);
             ArrayList<Pair<Integer>> lbonds = new ArrayList<>();
             ArrayList<Pair<Integer>> rbonds = new ArrayList<>();
-
             splitBonds(bonds, l, lr, rl, r, lbonds, rbonds);
+
+            //remove partner indexes from both hairpin ending's p arrays
+            p[r].remove(p[r].get(0));
+            p[p[r].get(0)].remove(r);
 
             // recursive construction of the algebraic RNA subTree on the right
             recBuildStructural(right, rbonds, meetIndexesList, zir, rl, r);
             // recursive construction of the algebraic RNA subTree on the left
             recBuildStructural(left, lbonds, meetIndexesList, zi, l, lr);
+
         }
     }
 
@@ -502,8 +476,8 @@ public class StructuralTree {
      * @param r right index
      */
     private void getMeetsInInterval(ArrayList<Integer> meetList, int l, int r ){
-        for(int i = l; i <= r; i++){
-            if(this.m[i] >= 1){
+        for(int i = l + 1; i < r; i++){
+            if(this.c[i] < this.m[i]){
                 meetList.add(i);
             }
         }
