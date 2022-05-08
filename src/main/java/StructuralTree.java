@@ -3,14 +3,13 @@ import org.biojava.nbio.structure.contact.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 public class StructuralTree {
 
     private final TertiaryStructure tertiaryStructure;
     private Tree<String> structuralTree;
-    private int[] c;
-    private ArrayList<Integer>[] p;
-    private int[] m;
 
     public StructuralTree(TertiaryStructure tertiaryStructure){
         this.tertiaryStructure = tertiaryStructure;
@@ -32,16 +31,24 @@ public class StructuralTree {
 
     private void buildStructural() {
 
-        // initialize counting and meets array
-        initmc();
-
+        int[] c = new int[this.tertiaryStructure.getSequence2().length()];
+        ArrayList<Integer>[] p = new ArrayList[this.tertiaryStructure.getSequence2().length()];
+        int[] m = new int[this.tertiaryStructure.getSequence2().length()];
+/*
+        int[] c = new int[25];
+        ArrayList<Integer>[] p = new ArrayList[25];
+        int[] m = new int[25];
+*/
         //initialize the pointers array
-        initp();
+        initp(p);
+
+        // initialize counting and meets array
+        initmc(m,c,p);
 
         // init indexes for later recursion call
         int l = 0; // left index
-        int r = this.tertiaryStructure.getSequence().length(); // right index
-
+        int r = this.tertiaryStructure.getSequence2().length() - 1; // right index
+    //    int r = 24; // right index
         // move l to the start of the structure
         while (c[l] == 0)
             l++;
@@ -53,7 +60,7 @@ public class StructuralTree {
         // the tail
 
         // the largest pseudoloop is now identified by the interval [l,r]
-        assert c[l] == 1 && c[r] == 0 : "Largest pseudoloop at [" + l + "," + r + "]\nCounting array: " + Arrays.toString(c);
+        assert c[l] >= 1 && c[r] == 0 : "Largest pseudoloop at [" + l + "," + r + "]\nCounting array: " + Arrays.toString(c);
 
         // create an empty list of zero intervals to detect concatenations
         ArrayList<Interval> zi = new ArrayList<>();
@@ -65,56 +72,150 @@ public class StructuralTree {
         ArrayList<Integer> meetIndexesList = new ArrayList<>();
 
         //find meets in the new pseudoloop, if any
-        getMeetsInInterval(meetIndexesList,l,r);
+        getMeetsInInterval(meetIndexesList,l,r,c,m);
 
         // create a copy of the list of weak bonds of the structure, ensuring that the
-        // copied list conserves ordering
-        ArrayList <Pair<Integer>> bonds = new ArrayList<>(this.tertiaryStructure.getBondList());
+        // copied list conserves ordering and all bonds where first and second values are equal have been removed
+        ArrayList <Pair<Integer>> bonds = this.filterBonds();
 
         // create the root node of the structural RNA tree
         Tree<String> t = new Tree<>();
 
         // start the recursive construction of the structural RNA Tree on the node ct
-        recBuildStructural(t, bonds, meetIndexesList, zi, l, r);
+        recBuildStructural(t, bonds, meetIndexesList, zi, c, p, m, l, r);
 
         // assign to the root of this tree
         this.structuralTree = t;
     }
 
-    private void recBuildStructural(Tree<String> ct, ArrayList<Pair<Integer>> bonds, ArrayList<Integer> meetsInInterval, ArrayList<Interval> zi, int l, int r) {
+    private ArrayList<Pair<Integer>> filterBonds() {
+        ArrayList<Pair<Integer>> filteredBonds = new ArrayList<>();
+        this.tertiaryStructure.getBondList().forEach(pair -> {
+            if(!Objects.equals(pair.getFirst(), pair.getSecond()))
+                filteredBonds.add(pair);
+        });
+     /*   ArrayList<Pair<Integer>> list = new ArrayList<>();
+        list.add(new Pair<>(1,6));
+        list.add(new Pair<>(3,11));
+        list.add(new Pair<>(8,19));
+        list.add(new Pair<>(11,16));
+        list.add(new Pair<>(14,18));
+        list.forEach(pair -> {
+            if(!Objects.equals(pair.getFirst(), pair.getSecond()))
+                filteredBonds.add(pair);
+        });*/
+        return filteredBonds;
+    }
 
-        if(zi.isEmpty() && meetsInInterval.isEmpty()){
-            // checks
-            assert c[l] == 1 && c[r] == 0 : "Pseudoloop bounds error while parsing at [" + l + "," + r
+    private void recBuildStructural(Tree<String> ct, ArrayList<Pair<Integer>> bonds, ArrayList<Integer> meetsInInterval, ArrayList<Interval> zi, int[] c, ArrayList<Integer>[] p, int[] m, int l, int r) {
+
+        // checks
+        assert c[l] >= 1 && c[r] == 0 : "Pseudoloop bounds error while parsing at [" + l + "," + r
+                + "]\nCounting array: " + Arrays.toString(c);
+        Pair<Integer> lastBond = bonds.get(bonds.size() - 1);
+        assert lastBond.getFirst() == r : "Mismatch among indexes of secondary structure and of "
+                + "determined loop in WeakBond: (" + l + "," + r + ") vs (" + lastBond.getSecond() + ","
+                + lastBond.getFirst() + ")";
+
+        if((!meetsInInterval.isEmpty() && Objects.equals(p[r].get(0), meetsInInterval.get(meetsInInterval.size() - 1))) || !zi.isEmpty()) {
+            int rl = 0;
+            int lr = 0;
+            int[] meetConcatC = c.clone();
+            ArrayList<Integer>[] leftP = p;
+            ArrayList<Integer>[] rightP = p;
+            if(!meetsInInterval.isEmpty() && Objects.equals(p[r].get(0), meetsInInterval.get(meetsInInterval.size() - 1))){
+                //meet case
+                ct.setValue(Operators.MEETING_LABEL);
+
+                //filter parents on indexes l, m and r
+                leftP = p.clone();
+                leftP[l] = this.filterPartnerList(l,l,meetsInInterval.get(meetsInInterval.size() - 1),p);
+                leftP[meetsInInterval.get(meetsInInterval.size() - 1)] = this.filterPartnerList(meetsInInterval.get(meetsInInterval.size() - 1),l,meetsInInterval.get(meetsInInterval.size() - 1),p);
+
+                rightP = p.clone();
+                rightP[r] = this.filterPartnerList(r,meetsInInterval.get(meetsInInterval.size() - 1),r,p);
+                rightP[meetsInInterval.get(meetsInInterval.size() - 1)] = this.filterPartnerList(meetsInInterval.get(meetsInInterval.size() - 1),meetsInInterval.get(meetsInInterval.size() - 1),r,p);
+
+                //find boundaries of the right pseudoloop and of the left pseudoloop
+                lr = meetsInInterval.get(meetsInInterval.size() - 1);
+                rl = meetsInInterval.get(meetsInInterval.size() - 1);
+
+                //When two pseudoloops are split by a meet, the c array changes
+                meetConcatC[meetsInInterval.get(meetsInInterval.size() - 1)] = 0;
+
+                meetsInInterval.remove(meetsInInterval.size() - 1);
+            } else if(!zi.isEmpty()){
+                //concat case
+                ct.setValue(Operators.CONCATENATION_LABEL);
+
+                // get rightmost zero interval
+                Interval rmzi = zi.get(zi.size() - 1);
+                zi.remove(zi.size() - 1);
+
+                // find boundaries of the right pseudoloop and of the left pseudoloop
+                lr = rmzi.i - 1;
+                rl = rmzi.j;
+            }
+            // the new right pseudoloop to consider has bounds [rl,rr]
+            assert c[rl] >= 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + rl + "," + r
                     + "]\nCounting array: " + Arrays.toString(c);
-            Pair<Integer> lastBond = bonds.get(bonds.size() - 1);
-            assert lastBond.getFirst() == r : "Mismatch among indexes of secondary structure and of "
-                    + "determined loop in WeakBond: (" + l + "," + r + ") vs (" + lastBond.getSecond() + ","
-                    + lastBond.getFirst() + ")";
 
+            // create the node for building the left part
+            Tree<String> left = new Tree<>();
+
+            // create node for building the right part
+            Tree<String> right = new Tree<>();
+
+            // update tree
+            ArrayList<Tree<String>> meetConcChilds = new ArrayList<>();
+            meetConcChilds.add(left);
+            meetConcChilds.add(right);
+            ct.replaceChildrenListBy(meetConcChilds);
+
+            // create an empty list of zero intervals to detect concatenations in the right
+            // pseudoloop
+            ArrayList<Interval> zir = new ArrayList<>();
+
+            // find zero intervals in the right pseudoloop, if any
+            detectZeroIntervals(c, zir, rl, r);
+
+            // create an empty list of meets indexes to detect meetings
+            ArrayList<Integer> meetIndexesList = new ArrayList<>();
+
+            //find meets in the new pseudoloop, if any
+            getMeetsInInterval(meetIndexesList, rl, r, c, m);
+
+            ArrayList<Pair<Integer>> lbonds = new ArrayList<>();
+            ArrayList<Pair<Integer>> rbonds = new ArrayList<>();
+            splitBonds(bonds, l, lr, rl, r, lbonds, rbonds);
+
+            // recursive construction of the algebraic RNA subTree on the right
+            recBuildStructural(right, rbonds, meetIndexesList, zir, c, rightP, m, rl, r);
+            // recursive construction of the algebraic RNA subTree on the left
+            recBuildStructural(left, lbonds, meetIndexesList, zi, meetConcatC, leftP, m, l, lr);
+        } else {
             if(p[r].get(0) > l){
                 //cross case
                 // determine number of crossings and set label
-                int numberOfCrossings = determineNumberOfCrossings(bonds);
+                int numberOfCrossings = determineNumberOfCrossings(bonds,p[r].get(0));
                 ct.setValue("(" + Operators.CROSSING_LABEL + "," + numberOfCrossings + ")");
 
                 // left end of the rightmost crossing hairpin
-                int lpp = this.p[r].get(0);
+                int lpp = p[r].get(0);
                 // index for the right end of the new pseudoloop
                 int rp = r;
 
                 // decrease counting array according to the elimination of this hairpin
                 for (int i = lpp; i < r; i++)
                     c[i]--;
-                // go ahead to the next index if no other hairpins are present in the r index
-                if(!(p[r].size() > 1)){
-                    // determine the ending of the last loop on the right
-                    while (c[rp] == 0)
-                        rp--;
-                    rp++; // last closing loop has 0 count, but belongs to the loop
-                }
+
+                // determine the ending of the last loop on the right
+                while (c[rp] == 0)
+                    rp--;
+                rp++; // last closing loop has 0 count, but belongs to the loop
+
                 // the new pseudoloop to consider has bounds [l,rp]
-                assert c[l] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + l + "," + rp
+                assert c[l] >= 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + l + "," + rp
                         + "]\nCounting array: " + Arrays.toString(c);
 
                 // create the empty node for building the rest of the tree on the left
@@ -134,23 +235,23 @@ public class StructuralTree {
                 ArrayList<Interval> zip = new ArrayList<>();
 
                 // find zero intervals in the new pseudoloop, if any
-                detectZeroIntervals(c, zip, l, rp);
+                detectZeroIntervals(c, zip, l, rp);    //errore, dopo un meet r non è uguale a 0, archi multipli sballano tutto
 
                 // create an empty list of meets indexes to detect meetings
                 ArrayList<Integer> meetIndexesList = new ArrayList<>();
 
                 //find meets in the new pseudoloop, if any
-                getMeetsInInterval(meetIndexesList, l, r);
+                getMeetsInInterval(meetIndexesList, l, rp, c, m);
 
                 // remove last bound from the list of bounds
                 bonds.remove(bonds.size() - 1);
 
                 //remove partner indexes from both hairpin ending's p arrays
+                p[p[r].get(0)].remove(Integer.valueOf(r));
                 p[r].remove(p[r].get(0));
-                p[p[r].get(0)].remove(r);
 
                 // recursive construction of the algebraic RNA subTree on the node rest
-                recBuildStructural(rest, bonds, meetIndexesList, zip, l, rp);
+                recBuildStructural(rest, bonds, meetIndexesList, zip, c, p, m, l, rp);
 
             } else {
                 if(p[r].size() > 1 && p[p[r].get(0)].size() == 1 && p[r].get(0) == l){
@@ -179,7 +280,7 @@ public class StructuralTree {
                     }
 
                     // the new pseudoloop to consider has bounds [lp,rp]
-                    assert c[lp] == 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + lp + "," + r + "]\nCounting array: "
+                    assert c[lp] >= 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + lp + "," + r + "]\nCounting array: "
                             + Arrays.toString(c);
 
                     // create the empty node for building the rest of the tree on the left
@@ -205,17 +306,17 @@ public class StructuralTree {
                     ArrayList<Integer> meetIndexesList = new ArrayList<>();
 
                     //find meets in the new pseudoloop, if any
-                    getMeetsInInterval(meetIndexesList, lp, r);
+                    getMeetsInInterval(meetIndexesList, lp, r, c, m);
 
                     // remove last bound from the list of bounds
                     bonds.remove(bonds.size() - 1);
 
                     //remove partner indexes from both hairpin ending's p arrays
+                    p[p[r].get(0)].remove(Integer.valueOf(r));
                     p[r].remove(p[r].get(0));
-                    p[p[r].get(0)].remove(r);
 
                     // recursive construction of the algebraic RNA subTree on the node rest
-                    recBuildStructural(rest, bonds, meetIndexesList, zip, lp, r);
+                    recBuildStructural(rest, bonds, meetIndexesList, zip, c, p, m, lp, r);
 
                 } else if(p[r].size() == 1 && p[p[r].get(0)].size() > 1 && p[r].get(0) == l){
                     //starting case
@@ -226,19 +327,17 @@ public class StructuralTree {
                         c[i]--;
 
                     int rp = r;
-                    
-                    // go ahead to the next index if no other hairpins are present in the r index
-                    if(!(p[r].size() > 1)){
-                        // init indexes for later recursion call
-                        rp = r - 1;
 
-                        // determine the ending of the last loop on the right
-                        while (c[rp] == 0)
-                            rp--;
-                        rp++; // last closing loop has 0 count, but belongs to the loop
-                    }
+                    // init indexes for later recursion call
+                    rp = r - 1;
+
+                    // determine the ending of the last loop on the right
+                    while (c[rp] == 0)
+                        rp--;
+                    rp++; // last closing loop has 0 count, but belongs to the loop
+
                     // the new pseudoloop to consider has bounds [lp,rp]
-                    assert c[l] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + l + "," + rp + "]\nCounting array: "
+                    assert c[l] >= 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + l + "," + rp + "]\nCounting array: "
                             + Arrays.toString(c);
 
                     // create the empty node for building the rest of the tree on the left
@@ -264,17 +363,17 @@ public class StructuralTree {
                     ArrayList<Integer> meetIndexesList = new ArrayList<>();
 
                     //find meets in the new pseudoloop, if any
-                    getMeetsInInterval(meetIndexesList, l, rp);
+                    getMeetsInInterval(meetIndexesList, l, rp, c, m);
 
                     // remove last bound from the list of bounds
                     bonds.remove(bonds.size() - 1);
 
                     //remove partner indexes from both hairpin ending's p arrays
+                    p[p[r].get(0)].remove(Integer.valueOf(r));
                     p[r].remove(p[r].get(0));
-                    p[p[r].get(0)].remove(r);
 
                     // recursive construction of the structural RNA subTree on the node rest
-                    recBuildStructural(rest, bonds, meetIndexesList, zip, l, rp);
+                    recBuildStructural(rest, bonds, meetIndexesList, zip, c, p, m, l, rp);
 
                 } else if(p[r].size() > 1 && p[p[r].get(0)].size() > 1 && p[r].get(0) == l){
                     //diamond case
@@ -289,7 +388,7 @@ public class StructuralTree {
                     // Starting and ending of the loop are l and r
 
                     // the new pseudoloop to consider has bounds [lp,rp]
-                    assert c[l] == 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + l + "," + r + "]\nCounting array: "
+                    assert c[l] >= 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + l + "," + r + "]\nCounting array: "
                             + Arrays.toString(c);
 
                     // create the empty node for building the rest of the tree on the left
@@ -315,17 +414,17 @@ public class StructuralTree {
                     ArrayList<Integer> meetIndexesList = new ArrayList<>();
 
                     //find meets in the new pseudoloop, if any
-                    getMeetsInInterval(meetIndexesList, l, r);
+                    getMeetsInInterval(meetIndexesList, l, r, c, m);
 
                     // remove last bound from the list of bounds
                     bonds.remove(bonds.size() - 1);
 
                     //remove partner indexes from both hairpin ending's p arrays
+                    p[p[r].get(0)].remove(Integer.valueOf(r));
                     p[r].remove(p[r].get(0));
-                    p[p[r].get(0)].remove(r);
 
                     // recursive construction of the structural RNA subTree on the node rest
-                    recBuildStructural(rest, bonds, meetIndexesList, zip, l, r);
+                    recBuildStructural(rest, bonds, meetIndexesList, zip, c, p, m, l, r);
 
                 } else {
                     //nest case
@@ -354,16 +453,13 @@ public class StructuralTree {
                         return;
                     }
 
-                    // go ahead to the next index if no other hairpins are present in the r index
-                    if(!(p[r].size() > 1)){
-                        // determine the ending of the last loop on the right
-                        while (c[rp] == 0)
-                            rp--;
-                        rp++; // last closing loop has 0 count, but belongs to the loop
-                    }
+                    // determine the ending of the last loop on the right
+                    while (c[rp] == 0)
+                        rp--;
+                    rp++; // last closing loop has 0 count, but belongs to the loop
 
                     // the new pseudoloop to consider has bounds [lp,rp]
-                    assert c[lp] == 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + lp + "," + rp + "]\nCounting array: "
+                    assert c[lp] >= 1 && c[rp] == 0 : "Determined wrong pseudoloop at [" + lp + "," + rp + "]\nCounting array: "
                             + Arrays.toString(c);
 
                     // create the empty node for building the rest of the tree on the left
@@ -389,85 +485,30 @@ public class StructuralTree {
                     ArrayList<Integer> meetIndexesList = new ArrayList<>();
 
                     //find meets in the new pseudoloop, if any
-                    getMeetsInInterval(meetIndexesList, lp, rp);
+                    getMeetsInInterval(meetIndexesList, lp, rp, c, m);
 
                     // remove last bound from the list of bounds
                     bonds.remove(bonds.size() - 1);
 
                     //remove partner indexes from both hairpin ending's p arrays
+                    p[p[r].get(0)].remove(Integer.valueOf(r));
                     p[r].remove(p[r].get(0));
-                    p[p[r].get(0)].remove(r);
 
                     // recursive construction of the structural RNA subTree on the node rest
-                    recBuildStructural(rest, bonds, meetIndexesList, zip, lp, rp);
+                    recBuildStructural(rest, bonds, meetIndexesList, zip, c, p, m, lp, rp);
+
                 }
             }
-        } else {
-            int rl;
-            int lr;
-            if (meetsInInterval.get(meetsInInterval.size() - 1) > zi.get(zi.size() - 1).j || zi.isEmpty()) {
-                //meet case
-                ct.setValue(Operators.MEETING_LABEL);
-
-                //find boundaries of the right pseudoloop and of the left pseudoloop
-                lr = meetsInInterval.get(meetsInInterval.size() - 1) - 1;
-                rl = meetsInInterval.get(meetsInInterval.size() - 1);
-                meetsInInterval.remove(meetsInInterval.size() - 1);
-            }
-            else {
-                //concat case
-                ct.setValue(Operators.CONCATENATION_LABEL);
-
-                // get rightmost zero interval
-                Interval rmzi = zi.get(zi.size() - 1);
-                zi.remove(zi.size() - 1);
-
-                // find boundaries of the right pseudoloop and of the left pseudoloop
-                lr = rmzi.i - 1;
-                rl = rmzi.j;
-            }
-            // the new right pseudoloop to consider has bounds [rl,rr]
-            assert c[rl] == 1 && c[r] == 0 : "Determined wrong pseudoloop at [" + rl + "," + r
-                    + "]\nCounting array: " + Arrays.toString(c);
-
-            // create the node for building the left part
-            Tree<String> left = new Tree<>();
-
-            // create node for building the right part
-            Tree<String> right = new Tree<>();
-
-            // update tree
-            ArrayList<Tree<String>> meetConcChilds = new ArrayList<>();
-            meetConcChilds.add(left);
-            meetConcChilds.add(right);
-            ct.replaceChildrenListBy(meetConcChilds);
-
-            // create an empty list of zero intervals to detect concatenations in the right
-            // pseudoloop
-            ArrayList<Interval> zir = new ArrayList<>();
-
-            // find zero intervals in the right pseudoloop, if any
-            detectZeroIntervals(c, zir, rl, r);
-
-            // create an empty list of meets indexes to detect meetings
-            ArrayList<Integer> meetIndexesList = new ArrayList<>();
-
-            //find meets in the new pseudoloop, if any
-            getMeetsInInterval(meetIndexesList, rl, r);
-            ArrayList<Pair<Integer>> lbonds = new ArrayList<>();
-            ArrayList<Pair<Integer>> rbonds = new ArrayList<>();
-            splitBonds(bonds, l, lr, rl, r, lbonds, rbonds);
-
-            //remove partner indexes from both hairpin ending's p arrays
-            p[r].remove(p[r].get(0));
-            p[p[r].get(0)].remove(r);
-
-            // recursive construction of the algebraic RNA subTree on the right
-            recBuildStructural(right, rbonds, meetIndexesList, zir, rl, r);
-            // recursive construction of the algebraic RNA subTree on the left
-            recBuildStructural(left, lbonds, meetIndexesList, zi, l, lr);
-
         }
+    }
+
+    private ArrayList<Integer> filterPartnerList(int index, int l, int r, ArrayList<Integer>[] p) {
+        ArrayList<Integer> filteredPartnerList = new ArrayList<>();
+        p[index].forEach(partnerIndex -> {
+            if(partnerIndex >= l && partnerIndex <= r)
+                filteredPartnerList.add(partnerIndex);
+        });
+        return filteredPartnerList;
     }
 
     /**
@@ -475,35 +516,30 @@ public class StructuralTree {
      * @param l left index
      * @param r right index
      */
-    private void getMeetsInInterval(ArrayList<Integer> meetList, int l, int r ){
+    private void getMeetsInInterval(ArrayList<Integer> meetList, int l, int r, int[] c, int[] m){
         for(int i = l + 1; i < r; i++){
-            if(this.c[i] < this.m[i]){
+            if(c[i] < m[i]){
                 meetList.add(i);
             }
         }
     }
 
-    private void splitBonds(ArrayList<Pair<Integer>> bonds, int ll, int lr, int rl, int rr, ArrayList<Pair<Integer>> lbonds,
-                            ArrayList<Pair<Integer>> rbonds) {
+    private void splitBonds(ArrayList<Pair<Integer>> bonds, int ll, int lr, int rl, int rr, ArrayList<Pair<Integer>> lbonds, ArrayList<Pair<Integer>> rbonds) {
         for (Pair<Integer> b : bonds) {
             if (ll <= b.getSecond() && b.getFirst() <= lr)
                 lbonds.add(b);
-            else if (rl <= b.getSecond() && b.getFirst() <= rr)
+            if (rl <= b.getSecond() && b.getFirst() <= rr)
                 rbonds.add(b);
-            else
-                assert false : "Error in splitting bonds: weak bond (" + b.getSecond() + "," + b.getFirst()
-                        + ") not in range [" + ll + "," + lr + "] and not in range [" + rl + "," + rr + "]";
         }
         assert lbonds.size() > 0 : "Error in splitting bonds: left bonds list empty";
         assert rbonds.size() > 0 : "Error in splitting bonds: right bonds list empty";
     }
 
-    private int determineNumberOfCrossings(ArrayList<Pair<Integer>> bonds) {
+    private int determineNumberOfCrossings(ArrayList<Pair<Integer>> bonds, int bondStart) {
         int n = 0;
-        int lastBondLeftIndex = bonds.get(bonds.size() - 1).getSecond();
         for (int i = bonds.size() - 2; i >= 0; i--) {
             Pair<Integer> b = bonds.get(i);
-            if (b.getSecond() < lastBondLeftIndex && lastBondLeftIndex < b.getFirst())
+            if (b.getFirst() < bondStart && bondStart < b.getSecond())
                 n++;
         }
         assert n > 0 : "Crossing number equal to zero!";
@@ -547,38 +583,70 @@ public class StructuralTree {
         } while (true);
     }
 
-    private void initmc() {
-        this.c = new int[this.tertiaryStructure.getSequence().length() - 1];
-        this.m = new int[this.tertiaryStructure.getSequence().length() - 1];
+    private void initmc(int[] m, int[] c, ArrayList<Integer>[] p) {
         int count = 0;
-        for (int i = 1; i <= this.tertiaryStructure.getSequence().length(); i++) {
-            if (loop_start(i)) {
-                // a loop has just started in the arc annotated sequence, so count is
-                // incremented
-                count++;
-                this.c[i] = count;
-            } else if (loop_stop(i)) {
-                // a loop has just stopped in the arc annotated sequence, so count is
-                // decremented
-                count--;
-                this.c[i] = count;
-            } else {// no star/stop of a loop, the value of count is kept
-                if(loop_start(i) && loop_stop(i))
-                    this.m[i] = this.p[i].size();
-                this.c[i] = count;
+        int currentIndexStartingLoops;
+        int currentIndexStoppingLoops;
+        for (int i = 0; i < this.tertiaryStructure.getSequence2().length(); i++) {
+            if (!(p[i] == null)) {
+                currentIndexStartingLoops = getStartingLoopsNumber(i,p);
+                currentIndexStoppingLoops = getStoppingLoopsNumber(i,p);
+                count = count + (currentIndexStartingLoops - currentIndexStoppingLoops);
+                if (currentIndexStartingLoops > 0 && currentIndexStoppingLoops > 0) {
+                    // a loop stops and another starts in the current index, so this is a meet
+                    m[i] = p[i].size();
+                }
             }
+            c[i] = count;
         }
+       /* for (int i = 0; i < 25; i++) {
+            if (!(p[i] == null)) {
+                currentIndexStartingLoops = getStartingLoopsNumber(i,p);
+                currentIndexStoppingLoops = getStoppingLoopsNumber(i,p);
+                count = count + (currentIndexStartingLoops - currentIndexStoppingLoops);
+                if (currentIndexStartingLoops > 0 && currentIndexStoppingLoops > 0) {
+                    // a loop stops and another starts in the current index, so this is a meet
+                    m[i] = p[i].size();
+                }
+            }
+            c[i] = count;
+        }*/
         assert count == 0 : "Value of count after initialization of counting array: " + count + "\nCounting array: "
-                + Arrays.toString(this.c);
+                + Arrays.toString(c);
     }
 
-    private void initp(){
-        this.p = new ArrayList[this.tertiaryStructure.getSequence().length() - 1];
+    private void initp(ArrayList<Integer>[] p){
+  /*      ArrayList<Pair<Integer>> list = new ArrayList<>();
+        list.add(new Pair<>(1,11));
+        list.add(new Pair<>(1,7));
+        list.add(new Pair<>(4,10));
+        list.add(new Pair<>(13,18));
+        list.add(new Pair<>(16,21));
+        list.add(new Pair<>(18,24));
+        for(Pair<Integer> currentBond : list) {
+            if (!currentBond.getFirst().equals(currentBond.getSecond())) {
+                if (p[currentBond.getFirst()] == null) {
+                    p[currentBond.getFirst()] = new ArrayList<>();
+                }
+                p[currentBond.getFirst()].add(currentBond.getSecond());
+                if (p[currentBond.getSecond()] == null) {
+                    p[currentBond.getSecond()] = new ArrayList<>();
+                }
+                p[currentBond.getSecond()].add(currentBond.getFirst());
+            }
+        }*/
+
         for(Pair<Integer> currentBond : this.tertiaryStructure.getBondList()) {
-            this.p[currentBond.getFirst()] = new ArrayList<>();
-            this.p[currentBond.getFirst()].add(currentBond.getSecond());
-            this.p[currentBond.getSecond()] = new ArrayList<>();
-            this.p[currentBond.getSecond()].add(currentBond.getFirst());
+            if (!currentBond.getFirst().equals(currentBond.getSecond())) {
+                if (p[currentBond.getFirst()] == null) {
+                    p[currentBond.getFirst()] = new ArrayList<>();
+                }
+                p[currentBond.getFirst()].add(currentBond.getSecond());
+                if (p[currentBond.getSecond()] == null) {
+                    p[currentBond.getSecond()] = new ArrayList<>();
+                }
+                p[currentBond.getSecond()].add(currentBond.getFirst());
+            }
         }
     }
 
@@ -586,24 +654,55 @@ public class StructuralTree {
      * Tells if at position i there is the starting of an hairpin loop of the
      * secondary structure represented by the original arc annotated sequence.
      */
-    private boolean loop_start(int i){
-        if(!(this.p[i] == null))
-            for(Integer partner : this.p[i])
+    private int getStartingLoopsNumber(int i, ArrayList<Integer>[] p){
+        int startingLoopsNumber = 0;
+        if(!(p[i] == null))
+            for(Integer partner : p[i])
                 if(partner > i)
-                    return true;
-        return false;
+                    startingLoopsNumber ++;
+        return startingLoopsNumber;
     }
 
     /*
      * Tells if at position i there is the ending of an hairpin loop of the
      * secondary structure represented by the original arc annotated sequence.
      */
-    private boolean loop_stop(int i) {
-        if(!(this.p[i] == null))
-            for(Integer partner : this.p[i])
+    private int getStoppingLoopsNumber(int i,  ArrayList<Integer>[] p) {
+        int stoppingLoopsNumber = 0;
+        if(!(p[i] == null))
+            for(Integer partner : p[i])
                 if(partner < i)
-                    return true;
-        return false;
+                    stoppingLoopsNumber ++;
+        return stoppingLoopsNumber;
+    }
+
+    /**
+     * Linearise an algebraic RNA tree or a structural RNA tree into a string. The
+     * format is ("node-label", [list-of-children]).
+     *
+     * @param t the tree
+     * @return string representing the tree
+     */
+    public static String treeToString(Tree<String> t) {
+        // DFS visit
+        StringBuilder stringTree = new StringBuilder("(");
+        stringTree.append("\"").append(t.getValue()).append("\"");
+        if (t.getChildren().size() > 0) {
+            stringTree.append(", [");
+            List<Tree<String>> children = t.getChildren();
+            int i;
+            for (i = 0; i < children.size() - 1; i++) {
+                Tree<String> tp = children.get(i);
+                stringTree.append(treeToString(tp)).append(", ");
+            }
+            Tree<String> tp = children.get(i);
+            stringTree.append(treeToString(tp)).append("]");
+        } else {
+            stringTree.append(", []");
+
+        }
+        stringTree.append(")");
+        return stringTree.toString();
     }
 
     /*

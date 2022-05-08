@@ -223,6 +223,15 @@ public class TertiaryStructure {
         return this.sequence;
     }
 
+    public String getSequence2(){
+        StringBuilder builder = new StringBuilder();
+        for(Chain currentChain : this.structure.getChains())
+            for(Group currentGroup : currentChain.getAtomGroups())
+                if(currentGroup.isAminoAcid() || currentGroup.isNucleotide())
+                    builder.append(StructureTools.get1LetterCode(currentGroup.getPDBName()));
+        return builder.toString();
+    }
+
     private void calculateSequence(){
         StringBuilder builder = new StringBuilder();
         for(Chain currentChain: this.structure.getChains())
