@@ -34,11 +34,7 @@ public class StructuralTree {
         int[] c = new int[this.tertiaryStructure.getSequence2().length()];
         ArrayList<Integer>[] p = new ArrayList[this.tertiaryStructure.getSequence2().length()];
         int[] m = new int[this.tertiaryStructure.getSequence2().length()];
-/*
-        int[] c = new int[25];
-        ArrayList<Integer>[] p = new ArrayList[25];
-        int[] m = new int[25];
-*/
+
         //initialize the pointers array
         initp(p);
 
@@ -48,7 +44,7 @@ public class StructuralTree {
         // init indexes for later recursion call
         int l = 0; // left index
         int r = this.tertiaryStructure.getSequence2().length() - 1; // right index
-    //    int r = 24; // right index
+
         // move l to the start of the structure
         while (c[l] == 0)
             l++;
@@ -94,16 +90,6 @@ public class StructuralTree {
             if(!Objects.equals(pair.getFirst(), pair.getSecond()))
                 filteredBonds.add(pair);
         });
-     /*   ArrayList<Pair<Integer>> list = new ArrayList<>();
-        list.add(new Pair<>(1,6));
-        list.add(new Pair<>(3,11));
-        list.add(new Pair<>(8,19));
-        list.add(new Pair<>(11,16));
-        list.add(new Pair<>(14,18));
-        list.forEach(pair -> {
-            if(!Objects.equals(pair.getFirst(), pair.getSecond()))
-                filteredBonds.add(pair);
-        });*/
         return filteredBonds;
     }
 
@@ -599,43 +585,11 @@ public class StructuralTree {
             }
             c[i] = count;
         }
-       /* for (int i = 0; i < 25; i++) {
-            if (!(p[i] == null)) {
-                currentIndexStartingLoops = getStartingLoopsNumber(i,p);
-                currentIndexStoppingLoops = getStoppingLoopsNumber(i,p);
-                count = count + (currentIndexStartingLoops - currentIndexStoppingLoops);
-                if (currentIndexStartingLoops > 0 && currentIndexStoppingLoops > 0) {
-                    // a loop stops and another starts in the current index, so this is a meet
-                    m[i] = p[i].size();
-                }
-            }
-            c[i] = count;
-        }*/
         assert count == 0 : "Value of count after initialization of counting array: " + count + "\nCounting array: "
                 + Arrays.toString(c);
     }
 
     private void initp(ArrayList<Integer>[] p){
-  /*      ArrayList<Pair<Integer>> list = new ArrayList<>();
-        list.add(new Pair<>(1,11));
-        list.add(new Pair<>(1,7));
-        list.add(new Pair<>(4,10));
-        list.add(new Pair<>(13,18));
-        list.add(new Pair<>(16,21));
-        list.add(new Pair<>(18,24));
-        for(Pair<Integer> currentBond : list) {
-            if (!currentBond.getFirst().equals(currentBond.getSecond())) {
-                if (p[currentBond.getFirst()] == null) {
-                    p[currentBond.getFirst()] = new ArrayList<>();
-                }
-                p[currentBond.getFirst()].add(currentBond.getSecond());
-                if (p[currentBond.getSecond()] == null) {
-                    p[currentBond.getSecond()] = new ArrayList<>();
-                }
-                p[currentBond.getSecond()].add(currentBond.getFirst());
-            }
-        }*/
-
         for(Pair<Integer> currentBond : this.tertiaryStructure.getBondList()) {
             if (!currentBond.getFirst().equals(currentBond.getSecond())) {
                 if (p[currentBond.getFirst()] == null) {
