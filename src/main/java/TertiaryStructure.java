@@ -42,6 +42,15 @@ public class TertiaryStructure {
         return this.bondList;
     }
 
+    /**
+     * FOR TESTS PURPOSES
+     * Replace current bonds list with a new one.
+     * @param bondList new bond list
+     */
+    public void setBondList(ArrayList<Pair<Integer>> bondList) {
+        this.bondList = bondList;
+    }
+
     private void calculateBondList() {
         boolean[][]contactMap = this.getContactMatrix();
         ArrayList<Pair<Integer>>bondList = new ArrayList<>();
