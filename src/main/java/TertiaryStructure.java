@@ -218,12 +218,6 @@ public class TertiaryStructure {
     }
 
     public String getSequence(){
-        if(this.sequence == null)
-            this.calculateSequence();
-        return this.sequence;
-    }
-
-    public String getSequence2(){
         StringBuilder builder = new StringBuilder();
         for(Chain currentChain : this.structure.getChains())
             for(Group currentGroup : currentChain.getAtomGroups())

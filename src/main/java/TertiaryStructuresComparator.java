@@ -8,7 +8,7 @@ public class TertiaryStructuresComparator {
             TertiaryStructure tertiaryStructure = new TertiaryStructure(structure);
             System.out.println(tertiaryStructure.getBondList());
             StructuralTree treeBuilder = new StructuralTree(tertiaryStructure);
-            System.out.println(StructuralTree.treeToString(treeBuilder.getStructuralRNATree()));
+            System.out.println(TreeOutputter.treeToString(treeBuilder.getStructuralRNATree()));
         } catch (Exception e){
             e.printStackTrace();
         }

@@ -10,4 +10,8 @@ public interface Operators {
     String ALGEBRAIC_TREE_ROOT_LABEL = "ROOT";
     String HAIRPIN_LABEL = "H";
 
+    String ALGEBRAIC_TREE_ROOT_LABEL_LATEX = "\\leftrightarrows";
+    String CONCATENATION_LABEL_LATEX = "\\odot";
+    String CROSSING_LABEL_LATEX = "\\Join";
+    String NESTING_LABEL_LATEX = "\\Cap";
 }

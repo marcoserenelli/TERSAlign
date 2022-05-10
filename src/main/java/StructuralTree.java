@@ -3,7 +3,6 @@ import org.biojava.nbio.structure.contact.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 public class StructuralTree {
@@ -14,8 +13,12 @@ public class StructuralTree {
 
     public StructuralTree(TertiaryStructure tertiaryStructure){
         this.tertiaryStructure = tertiaryStructure;
-        this.sequenceLength = this.tertiaryStructure.getSequence2().length();
+        this.sequenceLength = this.tertiaryStructure.getSequence().length();
         this.structuralTree = null;
+    }
+
+    public TertiaryStructure getTertiaryStructure(){
+        return this.tertiaryStructure;
     }
 
     public Tree<String> getStructuralRNATree() {
@@ -572,35 +575,6 @@ public class StructuralTree {
                 if(partner < i)
                     stoppingLoopsNumber ++;
         return stoppingLoopsNumber;
-    }
-
-    /**
-     * Linearise an algebraic RNA tree or a structural RNA tree into a string. The
-     * format is ("node-label", [list-of-children]).
-     *
-     * @param t the tree
-     * @return string representing the tree
-     */
-    public static String treeToString(Tree<String> t) {
-        // DFS visit
-        StringBuilder stringTree = new StringBuilder("(");
-        stringTree.append("\"").append(t.getValue()).append("\"");
-        if (t.getChildren().size() > 0) {
-            stringTree.append(", [");
-            List<Tree<String>> children = t.getChildren();
-            int i;
-            for (i = 0; i < children.size() - 1; i++) {
-                Tree<String> tp = children.get(i);
-                stringTree.append(treeToString(tp)).append(", ");
-            }
-            Tree<String> tp = children.get(i);
-            stringTree.append(treeToString(tp)).append("]");
-        } else {
-            stringTree.append(", []");
-
-        }
-        stringTree.append(")");
-        return stringTree.toString();
     }
 
     /**
