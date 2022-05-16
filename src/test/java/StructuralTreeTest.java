@@ -16,6 +16,7 @@ class StructuralTreeTest {
     @Test
     @DisplayName("Comparing expected and actual trees")
     void recBuildStructural() {
+
         ArrayList<Pair<Integer>> bonds = new ArrayList<>();
         //Simple tests
         // (1,4); (6,9); concat
@@ -25,7 +26,6 @@ class StructuralTreeTest {
         //Check this expected tree with real tree using given bonds
         assertTrue(isEquals(expectedTree, bonds, 12), "Concat test failed");
         bonds.clear();
-
 
         // (1,5); (5,10); meet
         bonds.add(new Pair<>(1, 5));
@@ -78,6 +78,15 @@ class StructuralTreeTest {
         bonds.clear();
 
         //More advanced tests
+
+        // (1,3); (2,5); (3,4); testCrossingMeet
+        bonds.add(new Pair<>(1, 3));
+        bonds.add(new Pair<>(2, 5));
+        bonds.add(new Pair<>(3, 4));
+        expectedTree = testCrossingMeet();
+        //Check this expected tree with real tree using given bonds
+        assertTrue(isEquals(expectedTree, bonds,16), "CrossingMeet test failed");
+        bonds.clear();
 
         // (1,5); (5,10); (12,15); testConcatMeet
         bonds.add(new Pair<>(1, 5));
@@ -150,6 +159,241 @@ class StructuralTreeTest {
         //Check this expected tree with real tree using given bonds
         assertTrue(isEquals(expectedTree, bonds,13), "MeetConcCrossNestDiamond test failed");
         bonds.clear();
+
+        //(1,9) (2,4) (3,5) (4,6) (4,7) (4,8)
+        bonds.add(new Pair<>(1,9));
+        bonds.add(new Pair<>(2,4));
+        bonds.add(new Pair<>(3,5));
+        bonds.add(new Pair<>(4,6));
+        bonds.add(new Pair<>(4,7));
+        bonds.add(new Pair<>(4,8));
+        expectedTree = testNotMeet();
+        assertTrue(isEquals(expectedTree,bonds, 15));
+        bonds.clear();
+
+        //(9,96); (8,96); (93,97); (96,98);
+        bonds.add(new Pair<>(8,96));
+        bonds.add(new Pair<>(9,96));
+        bonds.add(new Pair<>(93,97));
+        bonds.add(new Pair<>(96,98));
+        expectedTree = testMeet2();
+        assertTrue(isEquals(expectedTree,bonds, 99));
+        bonds.clear();
+
+        //(10,16); (12,16); (12,19); (16,19); (16,22)
+        bonds.add(new Pair<>(10,16));
+        bonds.add(new Pair<>(12,16));
+        bonds.add(new Pair<>(12,19));
+        bonds.add(new Pair<>(16,19));
+        bonds.add(new Pair<>(16,22));
+        expectedTree = testMeet3();
+        assertTrue(isEquals(expectedTree,bonds, 23));
+        bonds.clear();
+    }
+
+    private Tree<String> testMeet2(){
+        //(9,96); (8,96); (93,97); (96,98);
+        Tree<String> structuralTree = new Tree<>();
+
+        structuralTree.setValue("("+ Operators.CROSSING_LABEL + ",1)");
+
+        Tree<String> left = new Tree<>();
+        Tree<String> right = new Tree<>();
+
+        ArrayList<Tree<String>> crossingChilds = new ArrayList<>();
+        crossingChilds.add(left);
+        crossingChilds.add(right);
+        structuralTree.replaceChildrenListBy(crossingChilds);
+
+        right.setValue(Operators.HAIRPIN_LABEL + "(96,98)");
+        left.setValue("("+ Operators.CROSSING_LABEL + ",2)");
+
+        //2nd level
+        Tree<String> left2 = new Tree<>();
+        Tree<String> right2 = new Tree<>();
+
+        ArrayList<Tree<String>> crossingChilds2 = new ArrayList<>();
+        crossingChilds2.add(left2);
+        crossingChilds2.add(right2);
+        left.replaceChildrenListBy(crossingChilds2);
+
+        right2.setValue(Operators.HAIRPIN_LABEL + "(93,97)");
+        left2.setValue(Operators.ENDING_LABEL);
+
+        //3th level
+        Tree<String> left3 = new Tree<>();
+        Tree<String> right3 = new Tree<>();
+
+        ArrayList<Tree<String>> endingChilds = new ArrayList<>();
+        endingChilds.add(left3);
+        endingChilds.add(right3);
+        left2.replaceChildrenListBy(endingChilds);
+
+        right3.setValue(Operators.HAIRPIN_LABEL + "(8,96)");
+        left3.setValue(Operators.HAIRPIN_LABEL + "(9,96)");
+
+        return structuralTree;
+    }
+
+    private Tree<String> testMeet3(){
+        //(10,16); (12,16); (12,19); (16,19); (16,22)
+
+        Tree<String> structuralTree = new Tree<>();
+
+        structuralTree.setValue("("+Operators.CROSSING_LABEL+",1)");
+
+        Tree<String> left = new Tree<>();
+        Tree<String> right = new Tree<>();
+
+        ArrayList<Tree<String>> crossingChilds = new ArrayList<>();
+        crossingChilds.add(left);
+        crossingChilds.add(right);
+        structuralTree.replaceChildrenListBy(crossingChilds);
+
+        right.setValue(Operators.HAIRPIN_LABEL + "(16,22)");
+        left.setValue("("+Operators.CROSSING_LABEL+",1)");
+
+        //2nd level
+        Tree<String> left2 = new Tree<>();
+        Tree<String> right2 = new Tree<>();
+
+        ArrayList<Tree<String>> crossingChilds2 = new ArrayList<>();
+        crossingChilds2.add(left2);
+        crossingChilds2.add(right2);
+        left.replaceChildrenListBy(crossingChilds2);
+
+        right2.setValue(Operators.HAIRPIN_LABEL + "(12,19)");
+        left2.setValue(Operators.MEETING_LABEL);
+
+        //3rd level
+        Tree<String> left3 = new Tree<>();
+        Tree<String> right3 = new Tree<>();
+
+        ArrayList<Tree<String>> meetingChilds = new ArrayList<>();
+        meetingChilds.add(left3);
+        meetingChilds.add(right3);
+        left2.replaceChildrenListBy(meetingChilds);
+
+        right3.setValue(Operators.HAIRPIN_LABEL + "(16,19)");
+        left3.setValue(Operators.ENDING_LABEL);
+
+        //4th level
+        Tree<String> left4 = new Tree<>();
+        Tree<String> right4 = new Tree<>();
+
+        ArrayList<Tree<String>> endingChilds = new ArrayList<>();
+        endingChilds.add(left4);
+        endingChilds.add(right4);
+        left3.replaceChildrenListBy(endingChilds);
+
+        right4.setValue(Operators.HAIRPIN_LABEL + "(10,16)");
+        left4.setValue(Operators.HAIRPIN_LABEL + "(12,16)");
+
+        return structuralTree;
+    }
+
+    private Tree<String> testNotMeet(){
+        //(1,9); (2,4); (3,5); (4,6); (4,7); (4,8);
+
+        Tree<String> structuralTree = new Tree<>();
+
+        structuralTree.setValue(Operators.NESTING_LABEL);
+
+        Tree<String> left = new Tree<>();
+        Tree<String> right = new Tree<>();
+
+        ArrayList<Tree<String>> nestingChilds = new ArrayList<>();
+        nestingChilds.add(left);
+        nestingChilds.add(right);
+        structuralTree.replaceChildrenListBy(nestingChilds);
+
+        right.setValue(Operators.HAIRPIN_LABEL + "(1,9)");
+        left.setValue("("+Operators.CROSSING_LABEL+",1)");
+
+        //2nd level
+        Tree<String> left2 = new Tree<>();
+        Tree<String> right2 = new Tree<>();
+
+        ArrayList<Tree<String>> crossingChilds = new ArrayList<>();
+        crossingChilds.add(left2);
+        crossingChilds.add(right2);
+        left.replaceChildrenListBy(crossingChilds);
+
+        right2.setValue(Operators.HAIRPIN_LABEL + "(4,8)");
+        left2.setValue("("+Operators.CROSSING_LABEL+",1)");
+
+        //3rd level
+        Tree<String> left3 = new Tree<>();
+        Tree<String> right3 = new Tree<>();
+
+        ArrayList<Tree<String>> crossingChilds2 = new ArrayList<>();
+        crossingChilds2.add(left3);
+        crossingChilds2.add(right3);
+        left2.replaceChildrenListBy(crossingChilds2);
+
+        right3.setValue(Operators.HAIRPIN_LABEL + "(4,7)");
+        left3.setValue("("+Operators.CROSSING_LABEL+",1)");
+
+        //4th level
+        Tree<String> left4 = new Tree<>();
+        Tree<String> right4 = new Tree<>();
+
+        ArrayList<Tree<String>> crossingChilds3 = new ArrayList<>();
+        crossingChilds3.add(left4);
+        crossingChilds3.add(right4);
+        left3.replaceChildrenListBy(crossingChilds3);
+
+        right4.setValue(Operators.HAIRPIN_LABEL + "(4,6)");
+        left4.setValue("("+Operators.CROSSING_LABEL+",1)");
+
+        //5th level
+        Tree<String> left5 = new Tree<>();
+        Tree<String> right5 = new Tree<>();
+
+        ArrayList<Tree<String>> crossingChilds4 = new ArrayList<>();
+        crossingChilds4.add(left5);
+        crossingChilds4.add(right5);
+        left4.replaceChildrenListBy(crossingChilds4);
+
+        right5.setValue(Operators.HAIRPIN_LABEL + "(3,5)");
+        left5.setValue(Operators.HAIRPIN_LABEL + "(2,4)");
+
+        return structuralTree;
+    }
+
+    private Tree<String> testCrossingMeet() {
+        // (1,3); (2,5); (3,4);
+        Tree<String> structuralTree = new Tree<>();
+
+        structuralTree.setValue("(" + Operators.CROSSING_LABEL + ",1)");
+
+        Tree<String> left = new Tree<>();
+        Tree<String> right = new Tree<>();
+
+        //update tree
+        ArrayList<Tree<String>> crossingChilds = new ArrayList<>();
+        crossingChilds.add(left);
+        crossingChilds.add(right);
+        structuralTree.replaceChildrenListBy(crossingChilds);
+
+        left.setValue(Operators.MEETING_LABEL);
+        right.setValue(Operators.HAIRPIN_LABEL + "(2,5)");
+
+        //2nd level
+
+        Tree<String> left2 = new Tree<>();
+        Tree<String> right2 = new Tree<>();
+
+        //update tree
+        ArrayList<Tree<String>> meetingChilds = new ArrayList<>();
+        meetingChilds.add(left2);
+        meetingChilds.add(right2);
+        left.replaceChildrenListBy(meetingChilds);
+
+        right2.setValue(Operators.HAIRPIN_LABEL + "(3,4)");
+        left2.setValue(Operators.HAIRPIN_LABEL + "(1,3)");
+
+        return structuralTree;
     }
 
     private Tree<String> testConcat() {
@@ -660,7 +904,6 @@ class StructuralTreeTest {
 
         return structuralTree;
     }
-
 
     /**
      * Iterate the trees and checks if they have the same values in each nodes

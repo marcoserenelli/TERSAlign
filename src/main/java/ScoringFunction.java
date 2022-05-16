@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -17,7 +18,7 @@ public class ScoringFunction implements TreeAlignLabelDistanceAsymmetric<String,
     /**
      * Default name of configuration file.
      */
-    public static final String DEFAULT_PROPERTY_FILE = "Scoring_Config.txt";
+    public static final String DEFAULT_PROPERTY_FILE = "src/main/resources/Scoring_Config.txt";
 
     private String propertyFileName;
     private double insertOperatorCost;
@@ -53,7 +54,7 @@ public class ScoringFunction implements TreeAlignLabelDistanceAsymmetric<String,
         this.propertyFileName = propertyFileName;
         try (FileInputStream in = new FileInputStream(propertyFileName)) {
             props.load(in);
-            System.err.println("Configuration file " + propertyFileName + " loaded.");
+            System.out.println("Configuration file " + propertyFileName + " loaded.");
         } catch (FileNotFoundException e1) {
             System.err.println("WARNING: Configuration file " + propertyFileName
                     + " not found... usign default configuration values");
