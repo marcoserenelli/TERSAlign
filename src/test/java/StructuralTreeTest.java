@@ -1,4 +1,5 @@
 import fr.orsay.lri.varna.models.treealign.*;
+import org.apache.commons.cli.Option;
 import org.biojava.nbio.structure.Structure;
 import org.biojava.nbio.structure.StructureIO;
 import org.biojava.nbio.structure.contact.Pair;
@@ -7,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import javax.sound.midi.Soundbank;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -242,6 +244,9 @@ class StructuralTreeTest {
         expectedTree = testP4();
         assertTrue(isEquals(expectedTree, bonds, 25));
         bonds.clear();
+
+        //Compare Professor's trees
+        compareTrees();
 
     }
 
@@ -1317,6 +1322,87 @@ class StructuralTreeTest {
 
         return structuralTree;
     }
+
+    //Compare prof's trees and print their distances
+    private void compareTrees() {
+
+        Tree<String> tree1 = testP1();
+        Tree<String> tree2 = testP2();
+        Tree<String> tree3 = testP3();
+        Tree<String> tree4 = testP4();
+
+        String configurationFileName = ScoringFunction.DEFAULT_PROPERTY_FILE;
+        ScoringFunction f = new ScoringFunction(configurationFileName);
+
+        //1 with others
+        System.out.println("\nComparing 1 with 1");
+        compareTreesAndPrintDistance(tree1, tree1, f);
+        System.out.println("\nComparing 1 with 2");
+        compareTreesAndPrintDistance(tree1, tree2, f);
+        System.out.println("\nComparing 1 with 3");
+        compareTreesAndPrintDistance(tree1, tree3, f);
+        System.out.println("\nComparing 1 with 4");
+        compareTreesAndPrintDistance(tree1, tree4, f);
+
+        //2 with others
+        System.out.println("\nComparing 2 with 1");
+        compareTreesAndPrintDistance(tree2, tree1, f);
+        System.out.println("\nComparing 2 with 2");
+        compareTreesAndPrintDistance(tree2, tree2, f);
+        System.out.println("\nComparing 2 with 3");
+        compareTreesAndPrintDistance(tree2, tree3, f);
+        System.out.println("\nComparing 2 with 4");
+        compareTreesAndPrintDistance(tree2, tree4, f);
+
+        //3 with others
+        System.out.println("\nComparing 3 with 1");
+        compareTreesAndPrintDistance(tree3, tree1, f);
+        System.out.println("\nComparing 3 with 2");
+        compareTreesAndPrintDistance(tree3, tree2, f);
+        System.out.println("\nComparing 3 with 3");
+        compareTreesAndPrintDistance(tree3, tree3, f);
+        System.out.println("\nComparing 3 with 4");
+        compareTreesAndPrintDistance(tree3, tree4, f);
+
+        //4 with others
+        System.out.println("\nComparing 4 with 1");
+        compareTreesAndPrintDistance(tree4, tree1, f);
+        System.out.println("\nComparing 4 with 2");
+        compareTreesAndPrintDistance(tree4, tree2, f);
+        System.out.println("\nComparing 4 with 3");
+        compareTreesAndPrintDistance(tree4, tree3, f);
+        System.out.println("\nComparing 4 with 4");
+        compareTreesAndPrintDistance(tree4, tree4, f);
+    }
+
+    private void compareTreesAndPrintDistance(Tree<String> tree1,  Tree<String> tree2, ScoringFunction f){
+        AlignmentResult r = null;
+        try {
+            r = new AlignmentResult(tree1, tree2, f);
+        } catch (TreeAlignException e) {
+            System.err.println("ERROR: Alignment Exception: " + e.getMessage());
+            System.exit(4);
+        }
+        Tree<AlignedNode<String, String>> t = r.getAlignedTree();
+        System.out.println(TreeOutputter.treeToStringAligned(t));
+        double distance = r.getDistance();
+        System.out.println("Distance = " + distance);
+    }
+
+    /*
+    private void compareTreesAndPrintDistance(Tree<String> tree1,  Tree<String> tree2, ScoringFunction f){
+        System.out.println(TreeOutputter.treeToString(tree1) + "\nwith\n" + TreeOutputter.treeToString(tree2));
+        TreeAlign<String, String> al = new TreeAlign<>(f);
+        TreeAlignResult<String, String> result = null;
+        try {
+            result = al.align(tree1, tree2);
+        } catch (TreeAlignException e) {
+            e.printStackTrace();
+        }
+        assert result != null;
+        double distance = result.getDistance();
+        System.out.println("Distance: " + distance + "\n");
+    } */
 
     /**
      * Iterate the trees and checks if they have the same values in each nodes

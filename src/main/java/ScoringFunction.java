@@ -238,8 +238,6 @@ public class ScoringFunction implements TreeAlignLabelDistanceAsymmetric<String,
         if (isHairpin(y) && !isHairpin(x))
             return this.REPLACE_HAIRPIN_WITH_OPERATOR;
 
-        // unreachable code
-        assert false : "Scoring function unreachable code reached: (" + x + "," + y + ")";
         return 0;
     }
 
