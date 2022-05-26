@@ -27,6 +27,8 @@ import org.apache.commons.cli.ParseException;
 import fr.orsay.lri.varna.models.treealign.Tree;
 import fr.orsay.lri.varna.models.treealign.TreeAlignException;
 import org.biojava.nbio.structure.Structure;
+import org.biojava.nbio.structure.StructureIO;
+import org.biojava.nbio.structure.contact.Pair;
 import org.biojava.nbio.structure.io.PDBFileReader;
 
 /**
@@ -66,6 +68,9 @@ public class WorkbenchComparator {
         Option o10 = new Option("n","useconffile",true,"Use the specified configuration file instead of the default one");
         o10.setArgName("conf-file");
         options.addOption(o10);
+        Option o11 = new Option("fm","inputcustom",true,"Process the bond files in the given folder");
+        o11.setArgName("input-folder");
+        options.addOption(o11);
 
         // Parse command line
         HelpFormatter formatter = new HelpFormatter();
@@ -123,10 +128,15 @@ public class WorkbenchComparator {
         }
 
         // Manage option f
-        if (cmd.hasOption("f")) {
+        if (cmd.hasOption("f") || cmd.hasOption("fm")) {
+            boolean custom = cmd.hasOption("fm");
             // Process a folder
             // Get folder file from command line
-            File inputDirectory = new File(cmd.getOptionValue("f"));
+            File inputDirectory;
+            if(custom)
+                inputDirectory = new File(cmd.getOptionValue("fm"));
+            else
+                inputDirectory = new File(cmd.getOptionValue("f"));
             // Variables for counting execution time
             long startTimeNano;
             long elapsedTimeNano;
@@ -180,14 +190,20 @@ public class WorkbenchComparator {
                         + (outputStream == null ? outputStreamName : structuresStreamName) + " failed");
                 System.exit(3);
             }
-
             // Write column names on the csv output files
-            structuresStream.println("Num,FileName,NumberOfNucleotides,NumberOfWeakBonds,TimeToGenerateStructuralRNATree[ns]");
-            outputStream.println(
-                    "FileName1,NumberOfNucleotides1,NumberOfWeakBonds1,TimeToGenerateStructuralRNATree1[ns],"
-                            + "FileName2,NumberOfNucleotides2,NumberOfWeakBonds2,TimeToGenerateStructuralRNATree2[ns],"
-                            + "MaxNumberOfNucleotides1-2,ASPRADistance,TimeToCalculateASPRADistance[ns]");
-
+            if(!custom) {
+                structuresStream.println("Num,FileName,NumberOfNucleotides,NumberOfWeakBonds,TimeToGenerateStructuralRNATree[ns]");
+                outputStream.println(
+                        "FileName1,NumberOfNucleotides1,NumberOfWeakBonds1,TimeToGenerateStructuralRNATree1[ns],"
+                                + "FileName2,NumberOfNucleotides2,NumberOfWeakBonds2,TimeToGenerateStructuralRNATree2[ns],"
+                                + "MaxNumberOfNucleotides1-2,ASPRADistance,TimeToCalculateASPRADistance[ns]");
+            } else {
+                structuresStream.println("Num,FileName,NumberOfWeakBonds,TimeToGenerateStructuralRNATree[ns]");
+                outputStream.println(
+                        "FileName1,NumberOfWeakBonds1,TimeToGenerateStructuralRNATree1[ns],"
+                                + "FileName2,NumberOfWeakBonds2,TimeToGenerateStructuralRNATree2[ns],"
+                                + "ASPRADistance,TimeToCalculateASPRADistance[ns]");
+            }
             // Load configuration file for costs
             ScoringFunction f = new ScoringFunction(configurationFileName);
 
@@ -212,10 +228,15 @@ public class WorkbenchComparator {
                     TertiaryStructure tertiaryStructure1;
                     Structure struc;
                     try {
-                        PDBFileReader pdbreader = new PDBFileReader();
-                        struc = pdbreader.getStructure(f1.getPath());
-                        tertiaryStructure1 = new TertiaryStructure(struc);
-                        System.out.println(tertiaryStructure1.getSequence().length());
+                        if(!custom) {
+                            PDBFileReader pdbreader = new PDBFileReader();
+                            struc = pdbreader.getStructure(f1.getPath());
+                            tertiaryStructure1 = new TertiaryStructure(struc);
+                        } else {
+                            struc = StructureIO.getStructure("3mge");
+                            tertiaryStructure1 = new TertiaryStructure(struc);
+                            tertiaryStructure1.setBondList(TertiaryStructureBondsFileReader.readBondsList(f1.getPath()));
+                        }
                     } catch (Exception e) {
                         System.err.println("WARNING: Skipping file " + f1.getName() + " ... " + e.getMessage());
                         // skip this structure
@@ -224,6 +245,8 @@ public class WorkbenchComparator {
                     }
                     // Create the Structural RNA Tree and put the object into the map
                     st1 = new StructuralTree(tertiaryStructure1);
+                    if(custom)
+                        st1.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure1.getBondList()) + 1);
                     // Build Structural RNA Tree and measure building time
                     startTimeNano = System.nanoTime();
                     t1 = st1.getStructuralRNATree();
@@ -232,10 +255,16 @@ public class WorkbenchComparator {
                     structures.put(f1, st1);
                     structuresProcessingTime.put(f1, elapsedTimeNano);
                     // Output values in the structures output file
-                    structuresStream.println(numStructures + "," + "\"" + f1.getName() + "\","
-                            + st1.getTertiaryStructure().getSequence().length() + ","
-                            + st1.getTertiaryStructure().getBondList().size() + ","
-                            + elapsedTimeNano);
+                    if(!custom) {
+                        structuresStream.println(numStructures + "," + "\"" + f1.getName() + "\","
+                                + st1.getTertiaryStructure().getSequence().length() + ","
+                                + st1.getTertiaryStructure().getBondList().size() + ","
+                                + elapsedTimeNano);
+                    } else {
+                        structuresStream.println(numStructures + "," + "\"" + f1.getName() + "\","
+                                + st1.getTertiaryStructure().getBondList().size() + ","
+                                + elapsedTimeNano);
+                    }
                     numStructures++;
                 } else {
                     st1 = structures.get(f1);
@@ -261,10 +290,16 @@ public class WorkbenchComparator {
                         TertiaryStructure tertiaryStructure2;
                         Structure struc2;
                         try {
-                            PDBFileReader pdbreader = new PDBFileReader();
-                            struc2 = pdbreader.getStructure(f2.getPath());
-                            tertiaryStructure2 = new TertiaryStructure(struc2);
-                        } catch (IOException e) {
+                            if(!custom) {
+                                PDBFileReader pdbreader = new PDBFileReader();
+                                struc2 = pdbreader.getStructure(f2.getPath());
+                                tertiaryStructure2 = new TertiaryStructure(struc2);
+                            } else {
+                                struc2 = StructureIO.getStructure("3mge");
+                                tertiaryStructure2 = new TertiaryStructure(struc2);
+                                tertiaryStructure2.setBondList(TertiaryStructureBondsFileReader.readBondsList(f2.getPath()));
+                            }
+                        } catch (Exception e) {
                             System.err.println("WARNING: Skipping file " + f2.getName() + " ... " + e.getMessage());
                             // skip this structure
                             skippedFiles.add(f2);
@@ -272,7 +307,8 @@ public class WorkbenchComparator {
                         }
                         // Create the Structural RNA Tree and put the object into the map
                         st2 = new StructuralTree(tertiaryStructure2);
-
+                        if(custom)
+                            st2.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure2.getBondList()) + 1);
                         // Build Structural RNA Tree and measure building time
                         startTimeNano = System.nanoTime();
                         t2 = st2.getStructuralRNATree();
@@ -281,10 +317,16 @@ public class WorkbenchComparator {
                         structures.put(f2, st2);
                         structuresProcessingTime.put(f2, elapsedTimeNano);
                         // Output values in the structures output file
-                        structuresStream.println(numStructures + "," + "\"" + f2.getName() + "\","
-                                + st2.getTertiaryStructure().getSequence().length() + ","
-                                + st2.getTertiaryStructure().getBondList().size() + ","
-                                + elapsedTimeNano);
+                        if(!custom) {
+                            structuresStream.println(numStructures + "," + "\"" + f2.getName() + "\","
+                                    + st2.getTertiaryStructure().getSequence().length() + ","
+                                    + st2.getTertiaryStructure().getBondList().size() + ","
+                                    + elapsedTimeNano);
+                        } else {
+                            structuresStream.println(numStructures + "," + "\"" + f2.getName() + "\","
+                                    + st2.getTertiaryStructure().getBondList().size() + ","
+                                    + elapsedTimeNano);
+                        }
                         numStructures++;
                     } else {
                         st2 = structures.get(f2);
@@ -305,14 +347,23 @@ public class WorkbenchComparator {
                         continue;
                     }
                     // Write the output file
-                    outputStream.println("\"" + f1.getName() + "\"," + st1.getTertiaryStructure().getSequence().length() + ","
-                            + st1.getTertiaryStructure().getBondList().size() + ","
-                            + structuresProcessingTime.get(f1) + "," + "\"" + f2.getName() + "\","
-                            + st2.getTertiaryStructure().getSequence().length() + ","
-                            + st2.getTertiaryStructure().getBondList().size() + ","
-                            + structuresProcessingTime.get(f2) + ","
-                            + (Math.max(st1.getTertiaryStructure().getSequence().length(), st2.getTertiaryStructure().getSequence().length()))
-                            + "," + r.getDistance() + "," + elapsedTimeNano);
+                    if(!custom) {
+                        outputStream.println("\"" + f1.getName() + "\"," + st1.getTertiaryStructure().getSequence().length() + ","
+                                + st1.getTertiaryStructure().getBondList().size() + ","
+                                + structuresProcessingTime.get(f1) + "," + "\"" + f2.getName() + "\","
+                                + st2.getTertiaryStructure().getSequence().length() + ","
+                                + st2.getTertiaryStructure().getBondList().size() + ","
+                                + structuresProcessingTime.get(f2) + ","
+                                + (Math.max(st1.getTertiaryStructure().getSequence().length(), st2.getTertiaryStructure().getSequence().length()))
+                                + "," + r.getDistance() + "," + elapsedTimeNano);
+                    } else {
+                        outputStream.println("\"" + f1.getName() + "\","
+                                + st1.getTertiaryStructure().getBondList().size() + ","
+                                + structuresProcessingTime.get(f1) + "," + "\"" + f2.getName() + "\","
+                                + st2.getTertiaryStructure().getBondList().size() + ","
+                                + structuresProcessingTime.get(f2) + ","
+                                + r.getDistance() + "," + elapsedTimeNano);
+                    }
                     // End of Internal Loop
                 }
                 // End of External Loop
@@ -329,6 +380,14 @@ public class WorkbenchComparator {
                 CommandLineMessages.USAGE_EXAMPLES_WB + CommandLineMessages.COPYRIGHT + CommandLineMessages.SHORT_NOTICE
                         + CommandLineMessages.REPORT_TO,
                 true);
+    }
+
+    private static int calculateLastSequenceIndex(ArrayList<Pair<Integer>> bondList) {
+        int lastIndex = 0;
+        for(Pair<Integer> currentPair : bondList)
+            if(currentPair.getSecond() > lastIndex)
+                lastIndex = currentPair.getSecond();
+        return lastIndex;
     }
 
 }

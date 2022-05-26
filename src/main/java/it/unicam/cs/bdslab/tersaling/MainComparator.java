@@ -4,12 +4,15 @@ import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import fr.orsay.lri.varna.models.treealign.*;
 import org.apache.commons.cli.*;
 import org.biojava.nbio.structure.Structure;
 import org.biojava.nbio.structure.StructureIO;
+import org.biojava.nbio.structure.contact.Pair;
 import org.biojava.nbio.structure.io.PDBFileReader;
+import org.jmol.script.T;
 
 /**
  * MainComparator class interacting with the user through command line options.
@@ -30,6 +33,9 @@ public class MainComparator {
         Option o2 = new Option("sf","structfile",true,"Produce the structural RNA/Protein tree corresponding to the given structure by PDB file");
         o2.setArgName("input-file");
         options.addOption(o2);
+        Option o12 = new Option("sm","structcustom",true,"Produce the structural RNA/Protein tree corresponding to the bonds given by file");
+        o12.setArgName("input-file");
+        options.addOption(o12);
         Option o3 = new Option("ac","aligncode",true,"Align two given structures by PDB code producing alignment tree and distance");
         o3.setArgs(2);
         o3.setArgName("input-file1 input-file2");
@@ -38,6 +44,10 @@ public class MainComparator {
         o11.setArgs(2);
         o11.setArgName("input-file1 input-file2");
         options.addOption(o11);
+        Option o13 = new Option("am","aligncustom",true,"Align two given structures by bonds file producing alignment tree and distance");
+        o13.setArgs(2);
+        o13.setArgName("input-file1 input-file2");
+        options.addOption(o13);
         Option o4 = new Option("o","out",true,"Output result on the given file instead of standard output");
         o4.setArgName("output-file");
         options.addOption(o4);
@@ -111,19 +121,26 @@ public class MainComparator {
         }
 
         // Manage option s
-        if (cmd.hasOption("sc") || cmd.hasOption("sf")) {
+        if (cmd.hasOption("sc") || cmd.hasOption("sf") || cmd.hasOption("sm")) {
             boolean filepath = cmd.hasOption("sf");
+            boolean custom = cmd.hasOption("sm");
             TertiaryStructure tertiaryStructure = null;
             Structure struc;
             try {
-                if(filepath){
-                    String filename =  cmd.getOptionValue("sf");
-                    PDBFileReader pdbreader = new PDBFileReader();
-                    struc = pdbreader.getStructure(filename);
+                if(!custom) {
+                    if (filepath) {
+                        String filename = cmd.getOptionValue("sf");
+                        PDBFileReader pdbreader = new PDBFileReader();
+                        struc = pdbreader.getStructure(filename);
+                    } else {
+                        struc = StructureIO.getStructure(cmd.getOptionValue("sc"));
+                    }
+                    tertiaryStructure = new TertiaryStructure(struc);
                 } else {
-                    struc = StructureIO.getStructure(cmd.getOptionValue("sc"));
+                    struc = StructureIO.getStructure("3mge");
+                    tertiaryStructure = new TertiaryStructure(struc);
+                    tertiaryStructure.setBondList(TertiaryStructureBondsFileReader.readBondsList(cmd.getOptionValue("sm")));
                 }
-                tertiaryStructure = new TertiaryStructure(struc);
             } catch (Exception e) {
                 System.err.println("ERROR:" + e.getMessage());
                 System.exit(3);
@@ -131,6 +148,8 @@ public class MainComparator {
             // Construct the ASPRATtree
             Tree<String> t;
             StructuralTree tree = new StructuralTree(tertiaryStructure);
+            if(custom)
+                tree.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure.getBondList()) + 1);
             // get the structural RNA/Protein tree
             t = tree.getStructuralRNATree();
             // Produce Output
@@ -160,8 +179,9 @@ public class MainComparator {
         }
 
         // Manage Option a
-        if (cmd.hasOption("ac") || cmd.hasOption("af")) {
+        if (cmd.hasOption("ac") || cmd.hasOption("af") || cmd.hasOption("am")) {
             boolean filePath = cmd.hasOption("af");
+            boolean custom = cmd.hasOption("am");
             // variables for structural RNA trees
             Tree<String> t1;
             Tree<String> t2;
@@ -169,38 +189,54 @@ public class MainComparator {
             Structure struc;
             TertiaryStructure tertiaryStructure = null;
             try {
-                if(filePath){
-                    PDBFileReader pdbreader = new PDBFileReader();
-                    struc = pdbreader.getStructure(cmd.getOptionValues("af")[0]);
+                if(!custom) {
+                    if (filePath) {
+                        PDBFileReader pdbreader = new PDBFileReader();
+                        struc = pdbreader.getStructure(cmd.getOptionValues("af")[0]);
+                    } else {
+                        struc = StructureIO.getStructure(cmd.getOptionValues("ac")[0]);
+                    }
+                    tertiaryStructure = new TertiaryStructure(struc);
                 } else {
-                    struc = StructureIO.getStructure(cmd.getOptionValues("ac")[0]);
+                    struc = StructureIO.getStructure("3mge");
+                    tertiaryStructure = new TertiaryStructure(struc);
+                    tertiaryStructure.setBondList(TertiaryStructureBondsFileReader.readBondsList(cmd.getOptionValues("am")[0]));
                 }
-                tertiaryStructure = new TertiaryStructure(struc);
             } catch (Exception e) {
                 System.err.println("ERROR:" + e.getMessage());
                 System.exit(3);
             }
             // Construct structural RNA/Protein tree 1
             StructuralTree s1 = new StructuralTree(tertiaryStructure);
+            if(custom)
+                s1.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure.getBondList()) + 1);
             t1 = s1.getStructuralRNATree();
 
             // Parse the second input file for the secondary structure
             Structure struc2;
             TertiaryStructure tertiaryStructure2 = null;
             try {
-                if(filePath){
-                    PDBFileReader pdbreader = new PDBFileReader();
-                    struc2 = pdbreader.getStructure(cmd.getOptionValues("af")[1]);
+                if(!custom) {
+                    if (filePath) {
+                        PDBFileReader pdbreader = new PDBFileReader();
+                        struc2 = pdbreader.getStructure(cmd.getOptionValues("af")[1]);
+                    } else {
+                        struc2 = StructureIO.getStructure(cmd.getOptionValues("ac")[1]);
+                    }
+                    tertiaryStructure2 = new TertiaryStructure(struc2);
                 } else {
-                    struc2 = StructureIO.getStructure(cmd.getOptionValues("ac")[1]);
+                    struc2 = StructureIO.getStructure("3mge");
+                    tertiaryStructure2 = new TertiaryStructure(struc2);
+                    tertiaryStructure2.setBondList(TertiaryStructureBondsFileReader.readBondsList(cmd.getOptionValues("am")[1]));
                 }
-                tertiaryStructure2 = new TertiaryStructure(struc2);
             } catch (Exception e) {
                 System.err.println("ERROR:" + e.getMessage());
                 System.exit(3);
             }
             // Construct structural RNA/Protein tree 2
             StructuralTree s2 = new StructuralTree(tertiaryStructure2);
+            if(custom)
+                s2.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure2.getBondList()) + 1);
             t2 = s2.getStructuralRNATree();
 
             // Align t1 and t2, which contain two structural RNA trees
@@ -249,5 +285,13 @@ public class MainComparator {
                 CommandLineMessages.USAGE_EXAMPLES + CommandLineMessages.COPYRIGHT + CommandLineMessages.SHORT_NOTICE
                         + CommandLineMessages.REPORT_TO,
                 true);
+    }
+
+    private static int calculateLastSequenceIndex(ArrayList<Pair<Integer>> bondList) {
+        int lastIndex = 0;
+        for(Pair<Integer> currentPair : bondList)
+            if(currentPair.getSecond() > lastIndex)
+                lastIndex = currentPair.getSecond();
+        return lastIndex;
     }
 }
