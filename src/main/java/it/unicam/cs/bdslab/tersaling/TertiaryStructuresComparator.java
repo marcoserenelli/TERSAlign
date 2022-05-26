@@ -1,6 +1,10 @@
 package it.unicam.cs.bdslab.tersaling;
 
 import org.biojava.nbio.structure.*;
+import org.biojava.nbio.structure.contact.Pair;
+
+import java.util.ArrayList;
+import java.util.Objects;
 
 public class TertiaryStructuresComparator {
 
@@ -21,7 +25,6 @@ public class TertiaryStructuresComparator {
         } catch (Exception e){
             e.printStackTrace();
         }
-
     }
 }
 

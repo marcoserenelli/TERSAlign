@@ -1,6 +1,6 @@
 // Generated from C:/Users/Filippo/Projects/TertiaryStructuresComparator/src/main/resources\TertiaryStructureBonds.g4 by ANTLR 4.10.1
 
-	package it.unicam.cs.bdslab.tersaling;
+package it.unicam.cs.bdslab.tersaling;
 
 
 import org.antlr.v4.runtime.ParserRuleContext;
