@@ -1,3 +1,4 @@
+package it.unicam.cs.bdslab.tersaling;
 
 /**
  * Collector of strings for messages to send on the console.

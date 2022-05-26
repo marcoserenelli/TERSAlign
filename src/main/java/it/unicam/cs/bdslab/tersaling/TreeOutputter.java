@@ -1,3 +1,5 @@
+package it.unicam.cs.bdslab.tersaling;
+
 import java.util.List;
 
 import fr.orsay.lri.varna.models.treealign.AlignedNode;

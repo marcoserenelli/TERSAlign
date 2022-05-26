@@ -1,5 +1,5 @@
 import fr.orsay.lri.varna.models.treealign.*;
-import org.apache.commons.cli.Option;
+import it.unicam.cs.bdslab.tersaling.*;
 import org.biojava.nbio.structure.Structure;
 import org.biojava.nbio.structure.StructureIO;
 import org.biojava.nbio.structure.contact.Pair;
@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import javax.sound.midi.Soundbank;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;

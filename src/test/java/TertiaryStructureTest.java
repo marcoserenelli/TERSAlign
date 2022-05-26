@@ -1,3 +1,4 @@
+import it.unicam.cs.bdslab.tersaling.TertiaryStructure;
 import org.biojava.nbio.structure.*;
 import org.biojava.nbio.structure.io.PDBFileReader;
 import org.junit.jupiter.api.DisplayName;

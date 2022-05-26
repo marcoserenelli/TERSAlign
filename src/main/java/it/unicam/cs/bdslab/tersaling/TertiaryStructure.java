@@ -1,3 +1,5 @@
+package it.unicam.cs.bdslab.tersaling;
+
 import org.biojava.nbio.structure.*;
 import org.biojava.nbio.structure.Chain;
 import org.biojava.nbio.structure.GroupType;

@@ -1,3 +1,5 @@
+package it.unicam.cs.bdslab.tersaling;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -180,11 +182,10 @@ public class WorkbenchComparator {
             }
 
             // Write column names on the csv output files
-            structuresStream.println("Num,FileName,NumberOfNucleotides,NumberOfWeakBonds,"
-                    + "IsPseudoknotted,TimeToGenerateStructuralRNATree[ns]");
+            structuresStream.println("Num,FileName,NumberOfNucleotides,NumberOfWeakBonds,TimeToGenerateStructuralRNATree[ns]");
             outputStream.println(
-                    "FileName1,NumberOfNucleotides1,NumberOfWeakBonds1,IsPseudoknotted1,TimeToGenerateStructuralRNATree1[ns],"
-                            + "FileName2,NumberOfNucleotides2,NumberOfWeakBonds2,IsPseudoknotted2,TimeToGenerateStructuralRNATree2[ns],"
+                    "FileName1,NumberOfNucleotides1,NumberOfWeakBonds1,TimeToGenerateStructuralRNATree1[ns],"
+                            + "FileName2,NumberOfNucleotides2,NumberOfWeakBonds2,TimeToGenerateStructuralRNATree2[ns],"
                             + "MaxNumberOfNucleotides1-2,ASPRADistance,TimeToCalculateASPRADistance[ns]");
 
             // Load configuration file for costs
@@ -214,6 +215,7 @@ public class WorkbenchComparator {
                         PDBFileReader pdbreader = new PDBFileReader();
                         struc = pdbreader.getStructure(f1.getPath());
                         tertiaryStructure1 = new TertiaryStructure(struc);
+                        System.out.println(tertiaryStructure1.getSequence().length());
                     } catch (Exception e) {
                         System.err.println("WARNING: Skipping file " + f1.getName() + " ... " + e.getMessage());
                         // skip this structure
@@ -270,12 +272,13 @@ public class WorkbenchComparator {
                         }
                         // Create the Structural RNA Tree and put the object into the map
                         st2 = new StructuralTree(tertiaryStructure2);
+
                         // Build Structural RNA Tree and measure building time
                         startTimeNano = System.nanoTime();
                         t2 = st2.getStructuralRNATree();
                         elapsedTimeNano = System.nanoTime() - startTimeNano;
                         // Insert Object in maps
-                        structures.put(f2, st1);
+                        structures.put(f2, st2);
                         structuresProcessingTime.put(f2, elapsedTimeNano);
                         // Output values in the structures output file
                         structuresStream.println(numStructures + "," + "\"" + f2.getName() + "\","
@@ -284,8 +287,8 @@ public class WorkbenchComparator {
                                 + elapsedTimeNano);
                         numStructures++;
                     } else {
-                        st1 = structures.get(f2);
-                        t2 = st1.getStructuralRNATree();
+                        st2 = structures.get(f2);
+                        t2 = st2.getStructuralRNATree();
                     }
 
                     // Compare the two structural RNA Trees t1 and t2 to determine the distance

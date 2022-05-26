@@ -1,3 +1,5 @@
+package it.unicam.cs.bdslab.tersaling;
+
 import fr.orsay.lri.varna.models.treealign.*;
 import org.biojava.nbio.structure.contact.Pair;
 

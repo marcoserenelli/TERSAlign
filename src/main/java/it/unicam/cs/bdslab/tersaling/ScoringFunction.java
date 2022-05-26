@@ -1,4 +1,5 @@
-import java.io.File;
+package it.unicam.cs.bdslab.tersaling;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -250,10 +251,18 @@ public class ScoringFunction implements TreeAlignLabelDistanceAsymmetric<String,
         return s.equals("-");
     }
 
-    private boolean isConcOrNesting(String s) {
+    private boolean isConcOrNestingOrMeetOrStartOrDiamOrEnd(String s) {
         if (s.equals(Operators.CONCATENATION_LABEL))
             return true;
         if (s.equals(Operators.NESTING_LABEL))
+            return true;
+        if (s.equals(Operators.MEETING_LABEL))
+            return true;
+        if (s.equals(Operators.STARTING_LABEL))
+            return true;
+        if (s.equals(Operators.DIAMOND_LABEL))
+            return true;
+        if (s.equals(Operators.ENDING_LABEL))
             return true;
         return false;
     }
@@ -264,7 +273,7 @@ public class ScoringFunction implements TreeAlignLabelDistanceAsymmetric<String,
     }
 
     private boolean isOperator(String s) {
-        return isConcOrNesting(s) || isCrossing(s);
+        return isConcOrNestingOrMeetOrStartOrDiamOrEnd(s) || isCrossing(s);
     }
 
     private int getNumberOfCrossingMismatches(String s1, String s2) {

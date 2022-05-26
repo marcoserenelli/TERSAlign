@@ -1,3 +1,5 @@
+package it.unicam.cs.bdslab.tersaling;
+
 public interface Operators {
 
     String CONCATENATION_LABEL = "CONC";
