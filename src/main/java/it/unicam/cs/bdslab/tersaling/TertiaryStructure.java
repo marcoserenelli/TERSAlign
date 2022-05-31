@@ -12,6 +12,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 
+/**
+ * Representation of an RNA/Protein structure, including its secondary structure and the methods to extract a bond list from its tertiary structure
+ *
+ * @author Filippo Lampa, Marco Serenelli
+ */
 public class TertiaryStructure {
 
     private final Structure structure;
@@ -23,6 +28,10 @@ public class TertiaryStructure {
     private String distanceMatrixCalculationMethod;
     private String sequence;
 
+    /**
+     * Creates a new TertiaryStructure from a PDB file's structure
+     * @param structure the structure extracted from the PDB file
+     */
     public TertiaryStructure(Structure structure) {
         this.structure = structure;
         this.sequence = null;
@@ -35,22 +44,14 @@ public class TertiaryStructure {
     }
 
     /**
-     * Returns a list containing the indexes of bonded nucleotides/aminos, that is all nucleotides/aminos closer than the specified threshold.
+     * Returns a list containing the indexes of bonded nucleotides/aminos, that is all nucleotides/aminos closer than the specified threshold as represented
+     * within the contact map.
      * @return bond list
      */
     public ArrayList<Pair<Integer>> getBondList(){
         if(this.bondList == null)
             calculateBondList();
         return this.bondList;
-    }
-
-    /**
-     * FOR TESTS PURPOSES
-     * Replace current bonds list with a new one.
-     * @param bondList new bond list
-     */
-    public void setBondList(ArrayList<Pair<Integer>> bondList) {
-        this.bondList = bondList;
     }
 
     private void calculateBondList() {
@@ -228,13 +229,6 @@ public class TertiaryStructure {
         return builder.toString();
     }
 
-    private void calculateSequence(){
-        StringBuilder builder = new StringBuilder();
-        for(Chain currentChain: this.structure.getChains())
-            builder.append(currentChain.getSeqResSequence());
-        this.sequence = builder.toString();
-    }
-
     public void setDistanceMatrixCalculationMethod(String calculationMethod){
         if(calculationMethod.toLowerCase(Locale.ROOT).equals("default") || calculationMethod.toLowerCase(Locale.ROOT).equals("centerofmass"))
             this.distanceMatrixCalculationMethod = calculationMethod.toLowerCase(Locale.ROOT);
@@ -284,5 +278,13 @@ public class TertiaryStructure {
         }
     }
 
+    /**
+     * FOR TESTS PURPOSES
+     * Replace current bonds list with a new one.
+     * @param bondList new bond list
+     */
+    public void setBondList(ArrayList<Pair<Integer>> bondList) {
+        this.bondList = bondList;
+    }
 
 }

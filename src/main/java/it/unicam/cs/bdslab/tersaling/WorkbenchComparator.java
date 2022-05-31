@@ -2,7 +2,6 @@ package it.unicam.cs.bdslab.tersaling;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -142,7 +141,7 @@ public class WorkbenchComparator {
             long elapsedTimeNano;
             // Maps for holding all the structures to be processed and their associated
             // processing time
-            Map<File, StructuralTree> structures = new HashMap<>();
+            Map<File, TERSAlignTree> structures = new HashMap<>();
             Map<File, Long> structuresProcessingTime = new HashMap<>();
             // List for holding all the structures files
             List<File> structuresList = new ArrayList<>();
@@ -220,7 +219,7 @@ public class WorkbenchComparator {
                     continue;
 
                 // Retrieve the Structural RNA Tree for the structure 1
-                StructuralTree st1;
+                TERSAlignTree st1;
                 Tree<String> t1;
                 // Check if this structure has already been processed
                 if (!structures.containsKey(f1)) {
@@ -244,12 +243,12 @@ public class WorkbenchComparator {
                         continue;
                     }
                     // Create the Structural RNA Tree and put the object into the map
-                    st1 = new StructuralTree(tertiaryStructure1);
+                    st1 = new TERSAlignTree(tertiaryStructure1);
                     if(custom)
                         st1.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure1.getBondList()) + 1);
                     // Build Structural RNA Tree and measure building time
                     startTimeNano = System.nanoTime();
-                    t1 = st1.getStructuralRNATree();
+                    t1 = st1.getStructuralTree();
                     elapsedTimeNano = System.nanoTime() - startTimeNano;
                     // Insert Object in maps
                     structures.put(f1, st1);
@@ -268,7 +267,7 @@ public class WorkbenchComparator {
                     numStructures++;
                 } else {
                     st1 = structures.get(f1);
-                    t1 = st1.getStructuralRNATree();
+                    t1 = st1.getStructuralTree();
                 }
 
                 // Internal Loop - Compare structure 1 with all the subsequent ones
@@ -282,7 +281,7 @@ public class WorkbenchComparator {
                         continue;
 
                     // Retrieve the Structural RNA Tree for the structure 2
-                    StructuralTree st2 = null;
+                    TERSAlignTree st2 = null;
                     Tree<String> t2;
                     // Check if this structure has already been processed
                     if (!structures.containsKey(f2)) {
@@ -306,12 +305,12 @@ public class WorkbenchComparator {
                             continue;
                         }
                         // Create the Structural RNA Tree and put the object into the map
-                        st2 = new StructuralTree(tertiaryStructure2);
+                        st2 = new TERSAlignTree(tertiaryStructure2);
                         if(custom)
                             st2.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure2.getBondList()) + 1);
                         // Build Structural RNA Tree and measure building time
                         startTimeNano = System.nanoTime();
-                        t2 = st2.getStructuralRNATree();
+                        t2 = st2.getStructuralTree();
                         elapsedTimeNano = System.nanoTime() - startTimeNano;
                         // Insert Object in maps
                         structures.put(f2, st2);
@@ -330,7 +329,7 @@ public class WorkbenchComparator {
                         numStructures++;
                     } else {
                         st2 = structures.get(f2);
-                        t2 = st2.getStructuralRNATree();
+                        t2 = st2.getStructuralTree();
                     }
 
                     // Compare the two structural RNA Trees t1 and t2 to determine the distance

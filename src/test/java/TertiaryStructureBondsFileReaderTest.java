@@ -8,6 +8,12 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * Test class for the RNA/Protein's bonds file reader
+ *
+ * @author Marco Serenelli
+ *
+ */
 class TertiaryStructureBondsFileReaderTest {
 
 

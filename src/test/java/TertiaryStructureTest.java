@@ -6,6 +6,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Test class for the RNA/Protein's tertiary structure representation and distances calculations methods
+ *
+ * @author Marco Serenelli
+ *
+ */
 class TertiaryStructureTest {
 
     @Test

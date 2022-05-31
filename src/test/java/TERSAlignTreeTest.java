@@ -12,7 +12,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-class StructuralTreeTest {
+/**
+ * Test class for the RNA/Protein's structural tree builder
+ *
+ * @author Marco Serenelli
+ *
+ */
+class TERSAlignTreeTest {
 
     @Test
     @DisplayName("Comparing expected and actual trees")
@@ -1413,8 +1419,8 @@ class StructuralTreeTest {
 
         System.out.println("\nNew Tree\n");
 
-        StructuralTree structuralTree = CreateStructuralTreeWithCustomBonds(bonds,sequenceLenght);
-        Tree<String> actualTree = structuralTree.getStructuralRNATree();
+        TERSAlignTree TERSAlignTree = CreateStructuralTreeWithCustomBonds(bonds,sequenceLenght);
+        Tree<String> actualTree = TERSAlignTree.getStructuralTree();
 
         //If the trees don't have the same number of nodes return false
         if(expectedTree.countNodes() != actualTree.countNodes()) {
@@ -1444,7 +1450,7 @@ class StructuralTreeTest {
      * @param sequenceLength sequence length of the actual tree
      * @return the new structual tree
      */
-    private StructuralTree CreateStructuralTreeWithCustomBonds(ArrayList<Pair<Integer>> bonds, int sequenceLength) {
+    private TERSAlignTree CreateStructuralTreeWithCustomBonds(ArrayList<Pair<Integer>> bonds, int sequenceLength) {
         Structure structure = null;
         try {
             structure = StructureIO.getStructure("3mge");
@@ -1453,7 +1459,7 @@ class StructuralTreeTest {
         }
         TertiaryStructure tertiaryStructure = new TertiaryStructure(structure);
         tertiaryStructure.setBondList(bonds);
-        StructuralTree treeGenerator = new StructuralTree(tertiaryStructure);
+        TERSAlignTree treeGenerator = new TERSAlignTree(tertiaryStructure);
         treeGenerator.setSequenceLength(sequenceLength);
         return treeGenerator;
     }

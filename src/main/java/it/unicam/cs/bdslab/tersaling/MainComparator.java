@@ -12,7 +12,6 @@ import org.biojava.nbio.structure.Structure;
 import org.biojava.nbio.structure.StructureIO;
 import org.biojava.nbio.structure.contact.Pair;
 import org.biojava.nbio.structure.io.PDBFileReader;
-import org.jmol.script.T;
 
 /**
  * MainComparator class interacting with the user through command line options.
@@ -147,11 +146,11 @@ public class MainComparator {
             }
             // Construct the ASPRATtree
             Tree<String> t;
-            StructuralTree tree = new StructuralTree(tertiaryStructure);
+            TERSAlignTree tree = new TERSAlignTree(tertiaryStructure);
             if(custom)
                 tree.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure.getBondList()) + 1);
             // get the structural RNA/Protein tree
-            t = tree.getStructuralRNATree();
+            t = tree.getStructuralTree();
             // Produce Output
             String output;
             if (cmd.hasOption("l"))
@@ -207,10 +206,10 @@ public class MainComparator {
                 System.exit(3);
             }
             // Construct structural RNA/Protein tree 1
-            StructuralTree s1 = new StructuralTree(tertiaryStructure);
+            TERSAlignTree s1 = new TERSAlignTree(tertiaryStructure);
             if(custom)
                 s1.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure.getBondList()) + 1);
-            t1 = s1.getStructuralRNATree();
+            t1 = s1.getStructuralTree();
 
             // Parse the second input file for the secondary structure
             Structure struc2;
@@ -234,10 +233,10 @@ public class MainComparator {
                 System.exit(3);
             }
             // Construct structural RNA/Protein tree 2
-            StructuralTree s2 = new StructuralTree(tertiaryStructure2);
+            TERSAlignTree s2 = new TERSAlignTree(tertiaryStructure2);
             if(custom)
                 s2.setSequenceLength(calculateLastSequenceIndex(tertiaryStructure2.getBondList()) + 1);
-            t2 = s2.getStructuralRNATree();
+            t2 = s2.getStructuralTree();
 
             // Align t1 and t2, which contain two structural RNA trees
             AlignmentResult r = null;
