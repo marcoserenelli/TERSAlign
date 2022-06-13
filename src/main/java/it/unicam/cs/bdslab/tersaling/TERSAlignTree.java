@@ -56,9 +56,9 @@ public class TERSAlignTree {
      */
     private void buildStructural() {
 
-        int[] c = new int[this.sequenceLength];
-        ArrayList<Integer>[] p = new ArrayList[this.sequenceLength];
-        int[] m = new int[this.sequenceLength];
+        int[] c = new int[this.sequenceLength + 1];
+        ArrayList<Integer>[] p = new ArrayList[this.sequenceLength + 1];
+        int[] m = new int[this.sequenceLength + 1];
 
         //initialize the pointers array
         initp(p);
@@ -67,8 +67,8 @@ public class TERSAlignTree {
         initmc(m,c,p);
 
         // init indexes for later recursion call
-        int l = 0; // left index
-        int r = this.sequenceLength - 1; // right index
+        int l = 1; // left index
+        int r = this.sequenceLength ; // right index
 
         // move l to the start of the structure
         while (c[l] == 0)
@@ -611,7 +611,7 @@ public class TERSAlignTree {
         int count = 0;
         int currentIndexStartingLoops;
         int currentIndexStoppingLoops;
-        for (int i = 0; i < this.sequenceLength; i++) {
+        for (int i = 1; i <= this.sequenceLength; i++) {
             if (!(p[i] == null)) {
                 currentIndexStartingLoops = getStartingLoopsNumber(i,p);
                 currentIndexStoppingLoops = getStoppingLoopsNumber(i,p);
