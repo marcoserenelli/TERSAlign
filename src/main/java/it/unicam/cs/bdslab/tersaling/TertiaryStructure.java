@@ -68,6 +68,7 @@ public class TertiaryStructure {
         this.bondList = bondList;
     }
 
+
     /**
      * Returns a boolean matrix, values are true if their distance (taken from default calculation)
      * is less than threshold value.
@@ -279,12 +280,19 @@ public class TertiaryStructure {
     }
 
     /**
-     * FOR TESTS PURPOSES
      * Replace current bonds list with a new one.
      * @param bondList new bond list
      */
     public void setBondList(ArrayList<Pair<Integer>> bondList) {
         this.bondList = bondList;
+    }
+
+    /**
+     * Replace current sequence with a new one
+     * @param sequence new sequence
+     */
+    public void setSequence(String sequence) {
+        this.sequence = sequence;
     }
 
 }

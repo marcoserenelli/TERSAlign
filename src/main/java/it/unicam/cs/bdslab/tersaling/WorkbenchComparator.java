@@ -234,7 +234,7 @@ public class WorkbenchComparator {
                         } else {
                             struc = StructureIO.getStructure("3mge");
                             tertiaryStructure1 = new TertiaryStructure(struc);
-                            tertiaryStructure1.setBondList(TertiaryStructureBondsFileReader.readBondsList(f1.getPath()));
+                            tertiaryStructure1.setBondList(TertiaryStructureBondsOptionalSequenceFileReader.readBondsList(f1.getPath()));
                         }
                     } catch (Exception e) {
                         System.err.println("WARNING: Skipping file " + f1.getName() + " ... " + e.getMessage());
@@ -296,7 +296,7 @@ public class WorkbenchComparator {
                             } else {
                                 struc2 = StructureIO.getStructure("3mge");
                                 tertiaryStructure2 = new TertiaryStructure(struc2);
-                                tertiaryStructure2.setBondList(TertiaryStructureBondsFileReader.readBondsList(f2.getPath()));
+                                tertiaryStructure2.setBondList(TertiaryStructureBondsOptionalSequenceFileReader.readBondsList(f2.getPath()));
                             }
                         } catch (Exception e) {
                             System.err.println("WARNING: Skipping file " + f2.getName() + " ... " + e.getMessage());

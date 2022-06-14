@@ -138,7 +138,8 @@ public class MainComparator {
                 } else {
                     struc = StructureIO.getStructure("3mge");
                     tertiaryStructure = new TertiaryStructure(struc);
-                    tertiaryStructure.setBondList(TertiaryStructureBondsFileReader.readBondsList(cmd.getOptionValue("sm")));
+                    tertiaryStructure.setBondList(TertiaryStructureBondsOptionalSequenceFileReader.readBondsList(cmd.getOptionValue("sm")));
+                    tertiaryStructure.setSequence(TertiaryStructureBondsOptionalSequenceFileReader.readSequence(cmd.getOptionValue("sm")));
                 }
             } catch (Exception e) {
                 System.err.println("ERROR:" + e.getMessage());
@@ -199,7 +200,7 @@ public class MainComparator {
                 } else {
                     struc = StructureIO.getStructure("3mge");
                     tertiaryStructure = new TertiaryStructure(struc);
-                    tertiaryStructure.setBondList(TertiaryStructureBondsFileReader.readBondsList(cmd.getOptionValues("am")[0]));
+                    tertiaryStructure.setBondList(TertiaryStructureBondsOptionalSequenceFileReader.readBondsList(cmd.getOptionValues("am")[0]));
                 }
             } catch (Exception e) {
                 System.err.println("ERROR:" + e.getMessage());
@@ -226,7 +227,7 @@ public class MainComparator {
                 } else {
                     struc2 = StructureIO.getStructure("3mge");
                     tertiaryStructure2 = new TertiaryStructure(struc2);
-                    tertiaryStructure2.setBondList(TertiaryStructureBondsFileReader.readBondsList(cmd.getOptionValues("am")[1]));
+                    tertiaryStructure2.setBondList(TertiaryStructureBondsOptionalSequenceFileReader.readBondsList(cmd.getOptionValues("am")[1]));
                 }
             } catch (Exception e) {
                 System.err.println("ERROR:" + e.getMessage());

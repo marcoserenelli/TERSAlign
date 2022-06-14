@@ -4,6 +4,8 @@ import org.biojava.nbio.structure.io.PDBFileReader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -19,7 +21,6 @@ class TertiaryStructureTest {
     void testCalculateDistanceMatrix(){
         //Load a PROTEIN file
         Structure struc = loadFile("3mge");
-
         TertiaryStructure tertiaryStructure = new TertiaryStructure(struc);
 
         tertiaryStructure.setDistanceMatrixCalculationMethod("Default");

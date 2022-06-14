@@ -1394,21 +1394,6 @@ class TERSAlignTreeTest {
         System.out.println("Distance = " + distance);
     }
 
-    /*
-    private void compareTreesAndPrintDistance(Tree<String> tree1,  Tree<String> tree2, ScoringFunction f){
-        System.out.println(TreeOutputter.treeToString(tree1) + "\nwith\n" + TreeOutputter.treeToString(tree2));
-        TreeAlign<String, String> al = new TreeAlign<>(f);
-        TreeAlignResult<String, String> result = null;
-        try {
-            result = al.align(tree1, tree2);
-        } catch (TreeAlignException e) {
-            e.printStackTrace();
-        }
-        assert result != null;
-        double distance = result.getDistance();
-        System.out.println("Distance: " + distance + "\n");
-    } */
-
     /**
      * Iterate the trees and checks if they have the same values in each nodes
      * @param expectedTree the expected tree
