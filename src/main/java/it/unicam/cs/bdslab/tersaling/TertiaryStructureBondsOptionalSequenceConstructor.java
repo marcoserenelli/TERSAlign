@@ -28,13 +28,11 @@ public class TertiaryStructureBondsOptionalSequenceConstructor extends TertiaryS
 
     @Override
     public void enterSequenceContinue(TertiaryStructureBondsOptionalSequenceParser.SequenceContinueContext ctx) {
-        System.out.println("ENTER SEQ CONTINUE");
         this.sequenceBuffer.append(ctx.LETTERS().getText());
     }
 
     @Override
     public void exitSequenceEnd(TertiaryStructureBondsOptionalSequenceParser.SequenceEndContext ctx) {
-        System.out.println("EXIT SEQ END");
         this.sequenceBuffer.append(ctx.LETTERS().getText());
         this.sequence = this.sequenceBuffer.toString();
     }
@@ -42,36 +40,13 @@ public class TertiaryStructureBondsOptionalSequenceConstructor extends TertiaryS
     @Override
     public void enterBondsContinue(TertiaryStructureBondsOptionalSequenceParser.BondsContinueContext ctx){
         //add bonds to the list
-        System.out.println("ENTERCONTINUE");
         int left = Integer.parseInt(ctx.bond().INDEX(0).getText());
         int right = Integer.parseInt(ctx.bond().INDEX(1).getText());
         this.bondsList.add(new Pair<>(left, right));
-        System.out.println(bondsList);
-    }
-
-    @Override
-    public void exitBondsEnd(TertiaryStructureBondsOptionalSequenceParser.BondsEndContext ctx) {
-        System.out.println("EXITEND");
-    }
-
-    @Override
-    public void enterBondsEnd(TertiaryStructureBondsOptionalSequenceParser.BondsEndContext ctx) {
-        System.out.println("ENTEREND");
-    }
-
-    @Override
-    public void enterBond(TertiaryStructureBondsOptionalSequenceParser.BondContext ctx) {
-        System.out.println("ENTERBOND");
-    }
-
-    @Override
-    public void exitBond(TertiaryStructureBondsOptionalSequenceParser.BondContext ctx) {
-        System.out.println("EXITBOND");
     }
 
     @Override
     public void exitBondsContinue(TertiaryStructureBondsOptionalSequenceParser.BondsContinueContext ctx) {
-        System.out.println("EXITCONTINUE");
         this.bondsList.sort((o1, o2) -> {
             //if the first number is equals
             if (Objects.equals(o1.getFirst(), o2.getFirst())) {
