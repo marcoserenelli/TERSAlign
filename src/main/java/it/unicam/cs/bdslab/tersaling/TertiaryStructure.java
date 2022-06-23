@@ -57,10 +57,10 @@ public class TertiaryStructure {
     private void calculateBondList() {
         boolean[][]contactMap = this.getContactMatrix();
         ArrayList<Pair<Integer>>bondList = new ArrayList<>();
-        int colCount = 0;
-        for(int i=0; i<contactMap.length; i++) {
-            for (int j = colCount; j < contactMap.length; j++)
-                if (contactMap[i][j]) {
+        int colCount = 1;
+        for(int i=1; i<contactMap.length + 1; i++) {
+            for (int j = colCount; j < contactMap.length + 1; j++)
+                if (contactMap[i-1][j-1]) {
                     bondList.add(new Pair<>(i, j));
                 }
             colCount++;
