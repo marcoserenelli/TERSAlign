@@ -111,7 +111,7 @@ public class MainComparator {
         // Manage Option e
         if (cmd.hasOption("e")) {
             ScoringFunction f = new ScoringFunction(configurationFileName);
-            String scores = "ASPRAlign current costs:\n\n" + "Cost for Operator Insertion = "
+            String scores = "TERSAlign current costs:\n\n" + "Cost for Operator Insertion = "
                     + f.getInsertOperatorCost() + "\nCost for Operator Deletion = " + f.getDeleteOperatorCost()
                     + "\nCost for Operator Replacement with Operator = " + f.getReplaceOperatorCost()
                     + "\nCost for Hairpin Insertion = " + f.getInsertHairpinCost() + "\nCost for Hairpin Deletion = "
@@ -152,7 +152,7 @@ public class MainComparator {
             if(cmd.hasOption("cm"))
                 tertiaryStructure.setDistanceMatrixCalculationMethod("centerofmass");
 
-            // Construct the ASPRATtree
+            // Construct the TERSAtree
             Tree<String> t;
             TERSAlignTree tree = new TERSAlignTree(tertiaryStructure);
             if(custom)

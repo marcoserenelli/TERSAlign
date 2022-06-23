@@ -31,7 +31,7 @@ import org.biojava.nbio.structure.contact.Pair;
 import org.biojava.nbio.structure.io.PDBFileReader;
 
 /**
- * This class contains a main that runs the ASPRAlign comparison algorithm among
+ * This class contains a main that runs the TERSAlign comparison algorithm among
  * all the RNA secondary structures (with arbitrary pseudoknots) in a given
  * folder.
  *
@@ -116,7 +116,7 @@ public class WorkbenchComparator {
         // Manage Option e
         if (cmd.hasOption("e")) {
             ScoringFunction f = new ScoringFunction(configurationFileName);
-            String scores = "ASPRAlign current costs:\n\n" + "Cost for Operator Insertion = "
+            String scores = "TERSAlign current costs:\n\n" + "Cost for Operator Insertion = "
                     + f.getInsertOperatorCost() + "\nCost for Operator Deletion = " + f.getDeleteOperatorCost()
                     + "\nCost for Operator Replacement with Operator = " + f.getReplaceOperatorCost()
                     + "\nCost for Hairpin Insertion = " + f.getInsertHairpinCost() + "\nCost for Hairpin Deletion = "
@@ -171,8 +171,8 @@ public class WorkbenchComparator {
             // Output files creation
             PrintStream outputStream = null;
             PrintStream structuresStream = null;
-            String outputStreamName = inputDirectory.getAbsolutePath() + "/" + "ASPRAlignComparisonResults.csv";
-            String structuresStreamName = inputDirectory.getAbsolutePath() + "/" + "ASPRAlignProcessedStructures.csv";
+            String outputStreamName = inputDirectory.getAbsolutePath() + "/" + "TERSAlignComparisonResults.csv";
+            String structuresStreamName = inputDirectory.getAbsolutePath() + "/" + "TERSAlignProcessedStructures.csv";
 
             // Manage option "o"
             if (cmd.hasOption("o")) {
@@ -195,13 +195,13 @@ public class WorkbenchComparator {
                 outputStream.println(
                         "FileName1,NumberOfNucleotides1,NumberOfWeakBonds1,TimeToGenerateStructuralRNATree1[ns],"
                                 + "FileName2,NumberOfNucleotides2,NumberOfWeakBonds2,TimeToGenerateStructuralRNATree2[ns],"
-                                + "MaxNumberOfNucleotides1-2,ASPRADistance,TimeToCalculateASPRADistance[ns]");
+                                + "MaxNumberOfNucleotides1-2,TERSADistance,TimeToCalculateTERSADistance[ns]");
             } else {
                 structuresStream.println("Num,FileName,NumberOfWeakBonds,TimeToGenerateStructuralRNATree[ns]");
                 outputStream.println(
                         "FileName1,NumberOfWeakBonds1,TimeToGenerateStructuralRNATree1[ns],"
                                 + "FileName2,NumberOfWeakBonds2,TimeToGenerateStructuralRNATree2[ns],"
-                                + "ASPRADistance,TimeToCalculateASPRADistance[ns]");
+                                + "TERSADistance,TimeToCalculateTERSADistance[ns]");
             }
             // Load configuration file for costs
             ScoringFunction f = new ScoringFunction(configurationFileName);
