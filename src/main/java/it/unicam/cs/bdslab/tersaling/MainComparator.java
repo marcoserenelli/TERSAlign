@@ -63,6 +63,8 @@ public class MainComparator {
         Option o10 = new Option("n","useconffile",true,"Use the specified configuration file instead of the default one");
         o10.setArgName("conf-file");
         options.addOption(o10);
+        Option o14 = new Option("cm","centerofmass",false,"Calculate the distance matrix with center of mass method");
+        options.addOption(o14);
 
         // Parse command line
         HelpFormatter formatter = new HelpFormatter();
@@ -145,6 +147,11 @@ public class MainComparator {
                 System.err.println("ERROR:" + e.getMessage());
                 System.exit(3);
             }
+
+            //manage option cm
+            if(cmd.hasOption("cm"))
+                tertiaryStructure.setDistanceMatrixCalculationMethod("centerofmass");
+
             // Construct the ASPRATtree
             Tree<String> t;
             TERSAlignTree tree = new TERSAlignTree(tertiaryStructure);
@@ -206,6 +213,11 @@ public class MainComparator {
                 System.err.println("ERROR:" + e.getMessage());
                 System.exit(3);
             }
+
+            //manage option cm
+            if(cmd.hasOption("cm"))
+                tertiaryStructure.setDistanceMatrixCalculationMethod("centerofmass");
+
             // Construct structural RNA/Protein tree 1
             TERSAlignTree s1 = new TERSAlignTree(tertiaryStructure);
             if(custom)
