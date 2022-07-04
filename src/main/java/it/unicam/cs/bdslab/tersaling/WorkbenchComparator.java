@@ -70,6 +70,11 @@ public class WorkbenchComparator {
         Option o11 = new Option("fm","inputcustom",true,"Process the bond files in the given folder");
         o11.setArgName("input-folder");
         options.addOption(o11);
+        Option o12 = new Option("cm","centerofmass",false,"Calculate the distance matrix with center of mass method");
+        options.addOption(o12);
+        Option o13 = new Option("t","threshold",true,"Set a threshold");
+        o13.setArgName("threshold");
+        options.addOption(o13);
 
         // Parse command line
         HelpFormatter formatter = new HelpFormatter();
@@ -242,6 +247,16 @@ public class WorkbenchComparator {
                         skippedFiles.add(f1);
                         continue;
                     }
+
+                    if (cmd.hasOption("t")) {
+                        double threshold = Double.parseDouble(cmd.getOptionValue("t"));
+                        tertiaryStructure1.setThreshold(threshold);
+                    }
+
+                    //manage option cm
+                    if(cmd.hasOption("cm"))
+                        tertiaryStructure1.setDistanceMatrixCalculationMethod("centerofmass");
+
                     // Create the Structural RNA Tree and put the object into the map
                     st1 = new TERSAlignTree(tertiaryStructure1);
                     if(custom)
@@ -304,6 +319,16 @@ public class WorkbenchComparator {
                             skippedFiles.add(f2);
                             continue;
                         }
+
+                        if (cmd.hasOption("t")) {
+                            double threshold = Double.parseDouble(cmd.getOptionValue("t"));
+                            tertiaryStructure2.setThreshold(threshold);
+                        }
+
+                        //manage option cm
+                        if(cmd.hasOption("cm"))
+                            tertiaryStructure2.setDistanceMatrixCalculationMethod("centerofmass");
+
                         // Create the Structural RNA Tree and put the object into the map
                         st2 = new TERSAlignTree(tertiaryStructure2);
                         if(custom)

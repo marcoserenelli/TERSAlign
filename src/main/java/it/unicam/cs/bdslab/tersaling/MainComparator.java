@@ -65,6 +65,9 @@ public class MainComparator {
         options.addOption(o10);
         Option o14 = new Option("cm","centerofmass",false,"Calculate the distance matrix with center of mass method");
         options.addOption(o14);
+        Option o15 = new Option("t","threshold",true,"Set a threshold");
+        o15.setArgName("threshold");
+        options.addOption(o15);
 
         // Parse command line
         HelpFormatter formatter = new HelpFormatter();
@@ -148,6 +151,11 @@ public class MainComparator {
                 System.exit(3);
             }
 
+            if (cmd.hasOption("t")) {
+                double threshold = Double.parseDouble(cmd.getOptionValue("t"));
+                tertiaryStructure.setThreshold(threshold);
+            }
+
             //manage option cm
             if(cmd.hasOption("cm"))
                 tertiaryStructure.setDistanceMatrixCalculationMethod("centerofmass");
@@ -212,6 +220,11 @@ public class MainComparator {
             } catch (Exception e) {
                 System.err.println("ERROR:" + e.getMessage());
                 System.exit(3);
+            }
+
+            if (cmd.hasOption("t")) {
+                double threshold = Double.parseDouble(cmd.getOptionValue("t"));
+                tertiaryStructure.setThreshold(threshold);
             }
 
             //manage option cm
