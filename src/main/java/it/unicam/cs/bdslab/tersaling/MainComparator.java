@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import fr.orsay.lri.varna.models.treealign.*;
 import org.apache.commons.cli.*;
@@ -68,6 +69,10 @@ public class MainComparator {
         Option o15 = new Option("t","threshold",true,"Set a threshold");
         o15.setArgName("threshold");
         options.addOption(o15);
+        Option o16 = new Option("p","chain",true,"Calculate only the specific chain of a structure");
+        o16.setArgs(Option.UNLIMITED_VALUES);
+        o16.setArgName("chain-id");
+        options.addOption(o16);
 
         // Parse command line
         HelpFormatter formatter = new HelpFormatter();
@@ -151,6 +156,12 @@ public class MainComparator {
                 System.exit(3);
             }
 
+            if(cmd.hasOption("p")){
+                ArrayList<String> chainIds = new ArrayList<>();
+                Collections.addAll(chainIds, cmd.getOptionValues("p"));
+                tertiaryStructure.setSpecifiedChains(chainIds);
+            }
+
             if (cmd.hasOption("t")) {
                 double threshold = Double.parseDouble(cmd.getOptionValue("t"));
                 tertiaryStructure.setThreshold(threshold);
@@ -222,6 +233,12 @@ public class MainComparator {
                 System.exit(3);
             }
 
+            if(cmd.hasOption("p")){
+                ArrayList<String> chainIds = new ArrayList<>();
+                Collections.addAll(chainIds, cmd.getOptionValues("p"));
+                tertiaryStructure.setSpecifiedChains(chainIds);
+            }
+
             if (cmd.hasOption("t")) {
                 double threshold = Double.parseDouble(cmd.getOptionValue("t"));
                 tertiaryStructure.setThreshold(threshold);
@@ -258,6 +275,22 @@ public class MainComparator {
                 System.err.println("ERROR:" + e.getMessage());
                 System.exit(3);
             }
+
+            if(cmd.hasOption("p")){
+                ArrayList<String> chainIds = new ArrayList<>();
+                Collections.addAll(chainIds, cmd.getOptionValues("p"));
+                tertiaryStructure2.setSpecifiedChains(chainIds);
+            }
+
+            if (cmd.hasOption("t")) {
+                double threshold = Double.parseDouble(cmd.getOptionValue("t"));
+                tertiaryStructure2.setThreshold(threshold);
+            }
+
+            //manage option cm
+            if(cmd.hasOption("cm"))
+                tertiaryStructure2.setDistanceMatrixCalculationMethod("centerofmass");
+
             // Construct structural RNA/Protein tree 2
             TERSAlignTree s2 = new TERSAlignTree(tertiaryStructure2);
             if(custom)
