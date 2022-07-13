@@ -10,6 +10,8 @@ import org.biojava.nbio.structure.secstruc.SecStrucCalc;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -28,6 +30,7 @@ public class TertiaryStructure {
     private String distanceMatrixCalculationMethod;
     private String sequence;
 
+    private ArrayList<Chain> specifiedChains;
     /**
      * Creates a new TertiaryStructure from a PDB file's structure
      * @param structure the structure extracted from the PDB file
@@ -41,6 +44,7 @@ public class TertiaryStructure {
         this.contactMatrix = null;
         this.distanceMatrix = null;
         this.distanceMatrixCalculationMethod = "default";
+        this.specifiedChains = null;
     }
 
     /**
@@ -108,14 +112,15 @@ public class TertiaryStructure {
     }
 
     private void calculateDistanceMatrixCenterOfMass(){
-        int groupsNumber = getNonHetatmGroupsCounter(this.structure);
+        int groupsNumber = this.specifiedChains == null ? getNonHetatmGroupsCounter(this.structure) : getNonHetatmGroupsCounter(this.specifiedChains);
         double[][] distanceMatrix = new double[groupsNumber][groupsNumber];
         int moleculeCount = 0;
-        for(Chain currentChain: this.structure.getChains())
+        List<Chain> chainsToCompute = this.specifiedChains == null ? this.structure.getChains() : this.specifiedChains;
+        for(Chain currentChain: chainsToCompute)
             for (Group currentMolecule : currentChain.getAtomGroups()) {
                 if (currentMolecule.getType() != GroupType.HETATM) {
                     int comparedMoleculeCount = 0;
-                    for (Chain comparisonChain : this.structure.getChains()) {
+                    for (Chain comparisonChain : chainsToCompute) {
                         for (Group comparisonMolecule : comparisonChain.getAtomGroups()) {
                             if (comparisonMolecule.getType() != GroupType.HETATM) {
                                 distanceMatrix[moleculeCount][comparedMoleculeCount] = Calc.getDistance(Calc.centerOfMass(currentMolecule.getAtoms().toArray(new Atom[0])), Calc.centerOfMass(comparisonMolecule.getAtoms().toArray(new Atom[0])));
@@ -130,7 +135,7 @@ public class TertiaryStructure {
     }
 
     private void calculateDistanceMatrixDefault(){
-        Atom[] representativeAtomsArray = StructureTools.getRepresentativeAtomArray(this.structure);
+        Atom[] representativeAtomsArray = this.specifiedChains == null ? StructureTools.getRepresentativeAtomArray(this.structure) : this.getRepresentativeAtomArrayFromSpecifiedChains(this.specifiedChains);
         double[][] distanceMatrix = new double[representativeAtomsArray.length][representativeAtomsArray.length];
         for(int i=0; i<representativeAtomsArray.length; i++)
             for(int j=0; j<representativeAtomsArray.length; j++)
@@ -138,9 +143,35 @@ public class TertiaryStructure {
         this.distanceMatrix = distanceMatrix;
     }
 
+    private Atom[] getRepresentativeAtomArrayFromSpecifiedChains(ArrayList<Chain> chainsList) {
+        ArrayList<Atom> tempRepresentativeAtomsArray = new ArrayList<>();
+        chainsList.forEach(chain -> tempRepresentativeAtomsArray.addAll(new ArrayList<>(Arrays.asList(StructureTools.getRepresentativeAtomArray(chain)))));
+        Atom[] representativeAtomsArray = new Atom[tempRepresentativeAtomsArray.size()];
+        tempRepresentativeAtomsArray.toArray(representativeAtomsArray);
+        return  representativeAtomsArray;
+    }
+
+    private ArrayList<Chain> getSpecifiedChainsByIds(ArrayList<String>chainIds){
+        ArrayList<Chain> selectedChainsList = new ArrayList<>();
+        this.structure.getChains().forEach(chain -> {
+            if(chainIds.stream().anyMatch(chain.getName()::equalsIgnoreCase))
+                selectedChainsList.add(chain);
+        });
+        return selectedChainsList;
+    }
+
     private int getNonHetatmGroupsCounter(Structure struc){
         int nonHetatmGroupsCounter = 0;
         for(Chain currentChain : struc.getChains())
+            for(Group currentGroup : currentChain.getAtomGroups())
+                if(currentGroup.getType() != GroupType.HETATM)
+                    nonHetatmGroupsCounter++;
+        return nonHetatmGroupsCounter;
+    }
+
+    private int getNonHetatmGroupsCounter(ArrayList<Chain> chainList){
+        int nonHetatmGroupsCounter = 0;
+        for(Chain currentChain : chainList)
             for(Group currentGroup : currentChain.getAtomGroups())
                 if(currentGroup.getType() != GroupType.HETATM)
                     nonHetatmGroupsCounter++;
@@ -230,6 +261,10 @@ public class TertiaryStructure {
         return builder.toString();
     }
 
+    /**
+     * Sets the distance matrix calculation method.
+     * @param calculationMethod chosen calculation method, can be either "default" or "centerofmass"
+     */
     public void setDistanceMatrixCalculationMethod(String calculationMethod){
         if(calculationMethod.toLowerCase(Locale.ROOT).equals("default") || calculationMethod.toLowerCase(Locale.ROOT).equals("centerofmass"))
             this.distanceMatrixCalculationMethod = calculationMethod.toLowerCase(Locale.ROOT);
@@ -280,11 +315,28 @@ public class TertiaryStructure {
     }
 
     /**
-     * Replace current bonds list with a new one.
+     * Replace current bonds list with a new one, removing all the symmetric bonds.
      * @param bondList new bond list
      */
     public void setBondList(ArrayList<Pair<Integer>> bondList) {
+        Pair<Integer>currentBond;
+        Pair<Integer> symmetricBond;
+        for(int i=0; i<bondList.size(); i++){
+            currentBond = bondList.get(i);
+            symmetricBond = new Pair<>(currentBond.getSecond(), currentBond.getFirst());
+            if(bondList.contains(symmetricBond))
+                bondList.remove(symmetricBond);
+            else throw new IllegalArgumentException("Bond list errata all'interno del file selezionato");
+        }
         this.bondList = bondList;
+    }
+
+    /**
+     * Sets the chains on which to calculate the matrices.
+     * @param chainIds IDs of the selected chains
+     */
+    public void setSpecifiedChains(ArrayList<String> chainIds) {
+        this.specifiedChains = this.getSpecifiedChainsByIds(chainIds);
     }
 
     /**
